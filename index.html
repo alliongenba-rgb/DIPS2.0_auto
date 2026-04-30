@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>DIPS2.0 制限高度自動算出 v31</title>
+<title>DIPS2.0 制限高度自動算出 v32</title>
 <style id="leaflet-css">
 /* required styles */
 
@@ -805,7 +805,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
   <div class="logo">✈</div>
   <div class="htitle">
     <div class="s">Fukuoka Airport</div>
-    <div class="m">DIPS2.0 制限高度自動算出 v31</div>
+    <div class="m">DIPS2.0 制限高度自動算出 v32</div>
   </div>
 </header>
 <div class="wrap">
@@ -1039,7 +1039,7 @@ function genShareURL() {
   const data = { a: aircraft, p: pilots };
   const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
   const base = window.location.href.split('?')[0].split('#')[0];
-  currentShareURL = base + '?share=' + encoded;
+  currentShareURL = base + '#share=' + encoded;
   
   const box  = document.getElementById('shareURLBox');
   const ta   = document.getElementById('shareURLText');
@@ -1062,24 +1062,20 @@ function copyShareURL() {
 // 起動時に ?share= パラメーターを検出して自動インポート
 function checkShareParam() {
   const href = window.location.href;
-  alert('DEBUG1: checkShareParam開始\nURL=' + href.substring(0, 80));
   const qIdx = href.indexOf('?share=');
   const hIdx = href.indexOf('#share=');
   const sepIdx = qIdx >= 0 ? qIdx : hIdx;
-  if (sepIdx < 0) { alert('DEBUG2: shareパラメータなし → return'); return; }
+  if (sepIdx < 0) return;
   const shareRaw = href.substring(sepIdx + 7);
   const share = shareRaw.split('&')[0].split('#')[0];
-  alert('DEBUG3: share取得\n長さ=' + share.length + '\n先頭30文字=' + share.substring(0,30));
   const params = new URLSearchParams(window.location.search);
-  if (!share && !params.get('share')) { alert('DEBUG4: share空 → return'); return; }
+  if (!share && !params.get('share')) return;
   const shareVal = share || params.get('share');
-  if (!share) { alert('DEBUG5: share falsy → return'); return; }
+  if (!share) return;
   try {
-    alert('DEBUG6: atob開始');
     const data     = JSON.parse(decodeURIComponent(atob(share)));
     const aircraft = Array.isArray(data.a) ? data.a : [];
     const pilots   = Array.isArray(data.p) ? data.p : [];
-    alert('DEBUG7: デコード成功\n機体=' + aircraft.length + '件\n操縦者=' + pilots.length + '件');
     
     // 既存リストとマージ（重複除去）
     const curA = loadList('dips_aircraft');
@@ -1098,7 +1094,6 @@ function checkShareParam() {
     
     setTimeout(()=>toast(`✅ データを受信しました！機体${aircraft.length}件・操縦者${pilots.length}件を登録しました`), 300);
   } catch(e) {
-    alert('DEBUG8: エラー発生\n' + e.message);
     setTimeout(()=>toast('⚠ データの読み込みに失敗しました。URLが正しいか確認してください'), 300);
   }
 }
