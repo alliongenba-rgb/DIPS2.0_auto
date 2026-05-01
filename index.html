@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>DIPS2.0 制限高度自動算出 v32</title>
+<title>DIPS2.0 制限高度自動算出 v33</title>
 <style id="leaflet-css">
 /* required styles */
 
@@ -805,7 +805,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
   <div class="logo">✈</div>
   <div class="htitle">
     <div class="s">Fukuoka Airport</div>
-    <div class="m">DIPS2.0 制限高度自動算出 v32</div>
+    <div class="m">DIPS2.0 制限高度自動算出 v33</div>
   </div>
 </header>
 <div class="wrap">
@@ -1089,7 +1089,7 @@ function checkShareParam() {
     renderSelect('sPilot',    newP, '── 操縦者を選択 ──');
     
     // URLからshareパラメーターを除去（クリーンなURLに戻す）
-    const cleanURL = window.location.href.split('?')[0];
+    const cleanURL = window.location.href.split('?')[0].split('#')[0];
     window.history.replaceState({}, '', cleanURL);
     
     setTimeout(()=>toast(`✅ データを受信しました！機体${aircraft.length}件・操縦者${pilots.length}件を登録しました`), 300);
@@ -1102,7 +1102,8 @@ function checkShareParam() {
 // 起動時に読み込み
 document.addEventListener('DOMContentLoaded',()=>{
   initAircraftPilot();
-  setTimeout(checkShareParam, 100);
+  setTimeout(checkShareParam, 500);
+  window.addEventListener('hashchange', checkShareParam);
   // 外部リンクから戻った時に解析結果を復元
   try{
     const saved = sessionStorage.getItem('dips_cRes');
