@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>DIPS2.0 制限高度自動算出 v35</title>
+<title>DIPS2.0 制限高度自動算出 v36</title>
 <style id="leaflet-css">
 /* required styles */
 
@@ -805,7 +805,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
   <div class="logo">✈</div>
   <div class="htitle">
     <div class="s">Fukuoka Airport</div>
-    <div class="m">DIPS2.0 制限高度自動算出 v35</div>
+    <div class="m">DIPS2.0 制限高度自動算出 v36</div>
   </div>
 </header>
 <div class="wrap">
@@ -908,6 +908,19 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
             <div style="font-size:10px;color:#88ccff;margin-bottom:4px">👇 このURLをLINEで操縦者全員に送ってください</div>
             <textarea id="shareURLText" readonly style="width:100%;height:60px;background:#0a0a0a;border:1px solid #0077cc;border-radius:8px;color:#88ccff;font-size:10px;padding:6px;resize:none;font-family:monospace;box-sizing:border-box"></textarea>
             <div style="font-size:10px;color:var(--dim);margin-top:4px">※ URLを開くと機体・操縦者が自動登録されます</div>
+          </div>
+          <!-- ★ インポートエリア（ホーム画面アプリ用） -->
+          <div style="margin-top:12px;padding:10px 12px;background:#0a0f1a;border:1px solid #0055aa;border-radius:10px">
+            <div style="font-size:11px;color:#88aacc;font-weight:700;margin-bottom:8px">📥 共有URLからインポート（ホーム画面アプリ用）</div>
+            <div style="display:flex;gap:8px;align-items:stretch">
+              <input type="text" id="importURLInput" placeholder="共有URLをここに貼り付け"
+                style="flex:1;height:44px;background:#0a0a0a;border:1px solid #0055aa;border-radius:8px;color:#88ccff;font-size:12px;padding:0 10px;font-family:monospace;box-sizing:border-box">
+              <button onclick="importFromURL()"
+                style="height:44px;padding:0 14px;background:linear-gradient(135deg,#003388,#0055cc);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+                取込
+              </button>
+            </div>
+            <div style="font-size:10px;color:var(--dim);margin-top:4px">PCで生成した共有URLを貼り付けて「取込」をタップ</div>
           </div>
         </div>
       </div>
@@ -1048,6 +1061,33 @@ function genShareURL() {
   box.style.display  = 'block';
   btn.style.display  = 'flex';
   toast(`共有URL生成完了！機体${aircraft.length}件・操縦者${pilots.length}件`);
+}
+
+// ★ インポート（ホーム画面アプリ用：URLを貼り付けてインポート）
+function importFromURL() {
+  const input = document.getElementById('importURLInput');
+  const raw = (input.value || '').trim();
+  if (!raw) { toast('共有URLを貼り付けてください'); return; }
+  const params = new URLSearchParams(raw.includes('?') ? raw.split('?')[1].split('#')[0] : '');
+  const share = params.get('share');
+  if (!share) { toast('⚠ 有効な共有URLではありません'); return; }
+  try {
+    const data     = JSON.parse(decodeURIComponent(atob(share)));
+    const aircraft = Array.isArray(data.a) ? data.a : [];
+    const pilots   = Array.isArray(data.p) ? data.p : [];
+    const curA = loadList('dips_aircraft');
+    const curP = loadList('dips_pilots');
+    const newA = [...new Set([...curA, ...aircraft])];
+    const newP = [...new Set([...curP, ...pilots])];
+    saveList('dips_aircraft', newA);
+    saveList('dips_pilots',   newP);
+    renderSelect('sAircraft', newA, '── 機体を選択 ──');
+    renderSelect('sPilot',    newP, '── 操縦者を選択 ──');
+    input.value = '';
+    toast(`✅ インポート完了！機体${aircraft.length}件・操縦者${pilots.length}件を登録しました`);
+  } catch(e) {
+    toast('⚠ データの読み込みに失敗しました。URLを確認してください');
+  }
 }
 
 function copyShareURL() {
