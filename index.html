@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>DIPS2.0 制限高度自動算出 v34</title>
+<title>DIPS2.0 制限高度自動算出 v35d</title>
 <style id="leaflet-css">
 /* required styles */
 
@@ -805,7 +805,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
   <div class="logo">✈</div>
   <div class="htitle">
     <div class="s">Fukuoka Airport</div>
-    <div class="m">DIPS2.0 制限高度自動算出 v34</div>
+    <div class="m">DIPS2.0 制限高度自動算出 v35d</div>
   </div>
 </header>
 <div class="wrap">
@@ -1063,6 +1063,7 @@ function copyShareURL() {
 function checkShareParam() {
   const params = new URLSearchParams(window.location.search);
   const share = params.get('share');
+  toast('DBG:' + (window.location.search.substring(0, 40) || '(empty)'));
   if (!share) return;
   try {
     const data     = JSON.parse(decodeURIComponent(atob(share)));
