@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex,nofollow">
-<title>DIPS2.0 制限高度自動算出 v41</title>
+<title>DIPS2.0 制限高度自動算出 v42</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="DIPS">
@@ -692,6 +692,8 @@ body{background:var(--bg);color:var(--txt);font-family:Hiragino Sans,'Noto Sans 
 header{background:linear-gradient(135deg,#1a3a6a,#2266cc);border-bottom:1px solid #4488bb;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1000}
 .logo{width:36px;height:36px;flex-shrink:0;background:linear-gradient(135deg,#0050cc,#0099ff);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
 .htitle{flex:1}.htitle .s{font-size:10px;font-weight:600;letter-spacing:.18em;color:#aaddff;text-transform:uppercase}.htitle .m{font-size:17px;font-weight:700;color:#ffffff}
+#airportSel{font-size:11px;font-weight:700;letter-spacing:.04em;color:#ffffff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:3px 6px;margin-bottom:2px;max-width:220px}
+#airportSel option{color:#000}
 .wrap{max-width:640px;margin:0 auto;padding:12px 12px 100px}
 .card{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;margin-bottom:12px;overflow:hidden}
 .card-head{background:linear-gradient(135deg,#1a4a8a,#2266cc);padding:10px 14px;border-bottom:1px solid var(--bdr);font-size:14px;font-weight:600;letter-spacing:.15em;color:#ffffff;text-transform:uppercase}
@@ -706,7 +708,7 @@ input:focus,select:focus{border-color:var(--acc)}
 select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #mapWrap{border-radius:10px;overflow:hidden;border:1px solid var(--bhi);position:relative;margin-bottom:10px}
-#map{height:480px;background:#0a0f1a}
+#map{height:340px;background:#0a0f1a}
 .leaflet-container{background:#c8d8e8}.leaflet-container:focus{outline:none !important}
 .leaflet-tile{filter:brightness(1.0) saturate(0.9)}
 .leaflet-control-attribution{background:rgba(255,255,255,.85)!important;color:#334!important;font-size:9px!important}
@@ -733,7 +735,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .sgi:last-child{border-bottom:none}.sgi:active{background:#142840}
 .btn{width:100%;height:54px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
 .btn:active{transform:scale(.98);opacity:.9}
-.btn-analyze{background:linear-gradient(135deg,#004acc,#1a8cff);color:#fff;box-shadow:0 0 24px rgba(0,128,255,.4);font-size:16px;margin-bottom:12px}
+.btn-analyze{background:linear-gradient(135deg,#004acc,#1a8cff);color:#fff;box-shadow:0 0 24px rgba(0,128,255,.4);font-size:16px}
 .btn-analyze:disabled{background:#0c1830;color:#2a4060;box-shadow:none;cursor:not-allowed}
 /* 最終判定 */
 .verdict{border-radius:12px;padding:16px;margin-bottom:14px;border:2px solid}
@@ -745,7 +747,7 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .verdict-warn{background:#fff3cc;border-color:#cc7700}
 .verdict-ng{background:#ffdddd;border-color:#cc2200}
 /* 制限表面詳細 */
-.surf-detail{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:12px}
+.surf-detail{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:8px}
 .surf-detail-name{font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .surf-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .sdg-item{background:var(--inp);border-radius:6px;padding:7px 8px;text-align:center}
@@ -763,9 +765,11 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .btn-copy{height:46px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;background:#1a4a8a;color:#ffffff;border:1px solid #2266cc}
 .btn-copy:active{background:#2266cc}
 /* ★ DIPSボタン（大・目立つ） */
+.btn-dips{width:100%;height:68px;background:linear-gradient(135deg,#004400,#00aa00);color:#fff;border:none;border-radius:14px;cursor:pointer;font-size:19px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 0 30px rgba(0,200,0,.5);transition:all .2s;margin-bottom:8px;letter-spacing:.02em}
+.btn-dips:active{transform:scale(.97);opacity:.85}
 .dips-note{font-size:11px;color:#336633;text-align:center;margin-bottom:14px;line-height:1.7}
 .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:700}
-.cok{background:#ffffff;border:1px solid #005500;color:var(--ok)}.cdng{background:#ffdddd;border:1px solid #cc2200;color:var(--dng)}
+.cok{background:#003300;border:1px solid #005500;color:var(--ok)}.cdng{background:#2a0000;border:1px solid #550000;color:var(--dng)}
 .notice{background:#1a3a6a;border:1px solid #2266cc;border-radius:10px;padding:10px 12px;font-size:11px;color:#cce4ff;line-height:1.8;margin-bottom:12px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#003300,#006600);border:1px solid #00aa44;border-radius:12px;padding:12px 22px;color:var(--ok);font-size:14px;font-weight:700;white-space:nowrap;z-index:9999;animation:tIn .3s ease,tOut .3s ease 2s both}
 @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
@@ -791,30 +795,41 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 
 /* 外部システム連携ボタン */
 .ext-links{margin-bottom:12px}
-.ext-links-title{font-size:14px;font-weight:700;color:#4488aa;letter-spacing:.1em;margin-bottom:8px;text-transform:uppercase}
+.ext-links-title{font-size:11px;font-weight:700;color:#4488aa;letter-spacing:.1em;margin-bottom:8px;text-transform:uppercase}
 .ext-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:none;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;text-align:left;margin-bottom:8px;transition:all .2s}
 .ext-btn:active{transform:scale(.98);opacity:.8}
 .ext-btn .icon{font-size:22px;flex-shrink:0}
 .ext-btn .info{flex:1}
 .ext-btn .name{font-size:14px;font-weight:700;display:block;margin-bottom:2px}
 .ext-btn .desc{font-size:10px;opacity:.7;font-weight:400}
-.btn-hls{background:linear-gradient(135deg,#002244,#003a77);border:1px solid #0055aa;color:#ffffff}
-.btn-gsi{background:linear-gradient(135deg,#001a00,#003300);border:1px solid #005500;color:#ffffff}
+.btn-hls{background:linear-gradient(135deg,#002244,#003a77);border:1px solid #0055aa;color:#88ccff}
+.btn-gsi{background:linear-gradient(135deg,#001a00,#003300);border:1px solid #005500;color:#88ee88}
+.btn-dips2{background:linear-gradient(135deg,#1a0500,#3a0c00);border:1px solid #7a2200;color:#ffaa66}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">✈</div>
   <div class="htitle">
-    <div class="s">Fukuoka Airport</div>
-    <div class="m">DIPS2.0 制限高度自動算出 v41</div>
+    <select id="airportSel" onchange="switchAirport(this.value)">
+      <option value="fukuoka">福岡空港 / Fukuoka</option>
+      <option value="haneda">羽田空港 / Haneda</option>
+      <option value="narita">成田空港 / Narita</option>
+      <option value="kansai">関西空港 / Kansai</option>
+      <option value="itami">伊丹空港 / Itami</option>
+      <option value="centrair">中部国際空港 / Centrair</option>
+      <option value="kumamoto">熊本空港 / Kumamoto</option>
+    </select>
+    <div class="m">DIPS2.0 制限高度自動算出 v42</div>
   </div>
 </header>
-<div style="background:#e6a817;padding:10px 16px;font-size:12px;color:#3a2000;line-height:1.6;font-weight:600;text-align:center">
-  ⚠️ 本ツールは簡易的な参考情報です。飛行前に必ず最新の航空法令・公式システムを確認し、法令を厳守してください。本ツールの結果のみによる飛行判断は行わないでください。
-</div>
 <div class="wrap">
-
+  <div class="steps">
+    <div class="si active" id="s1"><span class="sn">1</span><div class="sl">地点入力</div></div>
+    <div class="si" id="s2"><span class="sn">2</span><div class="sl">解析</div></div>
+    <div class="si" id="s3"><span class="sn">3</span><div class="sl">DIPS登録</div></div>
+  </div>
+  <div class="pw"><div class="pf" id="prog" style="width:5%"></div></div>
   <div id="panelInput">
     <div class="card">
       <div class="card-head">飛行地点の入力</div>
@@ -845,14 +860,14 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
           </div>
           <div class="legend">
             <div class="legend-title">▌ 地図 規制エリア凡例</div>
-            <div class="legend-row"><div class="ll" style="background:#00d4ff"></div>水平表面（r=4km・制限H45m）</div>
-            <div class="legend-row"><div class="ll" style="background:#ff9500"></div>円錐表面（r=4〜5.6km・許可必要）</div>
-            <div class="legend-row"><div class="ld" style="border-color:#4499ff;opacity:.6"></div>外側水平表面（r=24km）</div>
-            <div class="legend-row"><div class="ll" style="background:#ff2200"></div>レッドゾーン（対象施設・飛行禁止）</div>
-            <div class="legend-row"><div class="ll" style="background:#ffff00"></div>イエローゾーン（周囲約1,000m・飛行禁止）</div>
+            <div class="legend-row"><div class="ll" style="background:#00d4ff"></div>水平表面（r=4km・制限=ARP標高+45m）</div>
+            <div class="legend-row"><div class="ll" style="background:#ff9500"></div>円錐表面（r=4〜16.5km・1:50勾配・許可必要）</div>
+            <div class="legend-row"><div class="ld" style="border-color:#4499ff;opacity:.6"></div>外側水平表面（r=16.5〜24km・制限=ARP標高+295m・許可必要）</div>
+            <div class="legend-row"><div class="ll" style="background:#ff2200"></div>レッドゾーン（対象施設・飛行禁止・福岡周辺のみ収載）</div>
+            <div class="legend-row"><div class="ll" style="background:#ffff00"></div>イエローゾーン（周囲約1,000m・飛行禁止・福岡周辺のみ収載）</div>
             <div class="legend-row"><div class="lb" style="background:rgba(255,80,0,.3);border-color:#ff5500"></div>DID地区（人口集中地区）※zoom12以上で表示</div>
-            <div class="legend-row"><div class="ll" style="background:#ff5555;opacity:.7"></div>進入表面（右上ボタンでON/OFF・概算値）</div>
-            <div class="legend-row"><div class="ll" style="background:#ffaa44;opacity:.7"></div>転移表面（右上ボタンでON/OFF・概算値）</div>
+            <div class="legend-row"><div class="ll" style="background:#ff5555;opacity:.7"></div>進入表面（右上ボタンでON/OFF・概算値・福岡空港のみ）</div>
+            <div class="legend-row"><div class="ll" style="background:#ffaa44;opacity:.7"></div>転移表面（右上ボタンでON/OFF・概算値・福岡空港のみ）</div>
           </div>
         </div>
         <div class="coord-grid">
@@ -865,7 +880,15 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
     <div class="card">
       <div class="card-head">フライト計画</div>
       <div class="card-body">
+        <div class="fg" style="margin-bottom:10px">
+          <label class="fl">飛行目的</label>
+          <select id="sPurp"><option>空撮</option><option>測量・点検</option><option>インフラ点検</option><option>農業</option><option>その他</option></select>
+        </div>
         <div class="r2">
+          <div class="fg"><label class="fl">希望高度(m)</label><input type="number" id="iAlt" value="100" min="0" max="300" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">飛行時間(分)</label><input type="number" id="iTime" value="30" min="1" max="480" inputmode="numeric"></div>
+        </div>
+        <div class="r2" style="margin-top:10px">
           <div class="fg"><label class="fl">機体名</label><input type="text" id="iAircraftName" placeholder="例: DJI Mini 4 Pro"></div>
           <div class="fg"><label class="fl">操縦者名</label><input type="text" id="iPilotName" placeholder="例: 濵﨑 太郎"></div>
         </div>
@@ -905,8 +928,20 @@ function execCopy(text, successMsg, failMsg) {
 }
 
 const D2R=Math.PI/180,R2D=180/Math.PI,ER=6371000;
-// ARP座標: AIP RJFF AD2.2「333504N/1302706E」→ 十進数変換
-const ARP={lat:33.5844,lng:130.4517},ARPEL=9;
+
+// ★ v42: 全国7空港対応（水平表面・円錐表面・外側水平表面のみ。進入/転移表面・小型無人機等飛行禁止法データは福岡のみ）
+// ARP座標・標点標高は各空港公式「高さ制限回答システム」(secure.kix-ap.ne.jp配下)のmap.js/constants.jsより取得
+const AIRPORTS={
+  fukuoka :{name:'福岡空港'        ,nameEn:'Fukuoka Airport'      ,arp:{lat:33.5844            ,lng:130.4517            },arpel:9.1  ,hls:'https://secure.kix-ap.ne.jp/fukuoka-airport/'                 ,phone:'092-623-0636' ,hasDetail:true},
+  haneda  :{name:'羽田空港'        ,nameEn:'Haneda Airport'       ,arp:{lat:35.55325248        ,lng:139.78122849        },arpel:6.4  ,hls:'https://secure.kix-ap.ne.jp/haneda-airport/'                  ,phone:null           ,hasDetail:false},
+  narita  :{name:'成田空港'        ,nameEn:'Narita Airport'       ,arp:{lat:35.7652777777778   ,lng:140.385555555556    },arpel:41.0 ,hls:'https://secure.kix-ap.ne.jp/narita-airport/Temporary/index.html',phone:null          ,hasDetail:false},
+  kansai  :{name:'関西空港'        ,nameEn:'Kansai Airport'       ,arp:{lat:34.4341666666667   ,lng:135.232777777778    },arpel:5.3  ,hls:'https://secure.kix-ap.ne.jp/kix/'                             ,phone:null           ,hasDetail:false},
+  itami   :{name:'伊丹空港（大阪国際空港）',nameEn:'Itami Airport',arp:{lat:34.78435333        ,lng:135.43913805        },arpel:12   ,hls:'https://secure.kix-ap.ne.jp/itm/'                             ,phone:null           ,hasDetail:false},
+  centrair:{name:'中部国際空港（セントレア）',nameEn:'Chubu Centrair Airport',arp:{lat:34.8584158805556,lng:136.805394605556},arpel:3.79,hls:'https://secure.kix-ap.ne.jp/centrair/Temporary/index.html'  ,phone:null           ,hasDetail:false},
+  kumamoto:{name:'熊本空港'        ,nameEn:'Kumamoto Airport'     ,arp:{lat:32.8372597222222   ,lng:130.855152633333    },arpel:192.7,hls:'https://secure.kix-ap.ne.jp/kumamoto-airport/'                ,phone:null           ,hasDetail:false}
+};
+let currentAirportKey='fukuoka';
+let ARP=AIRPORTS.fukuoka.arp, ARPEL=AIRPORTS.fukuoka.arpel;
 // ═══ 小型無人機等飛行禁止法 対象施設周辺地域データ（v37追加）═══
 // 出典: 国土地理院 地理院地図 配信データ drone_rz_2607 / drone_yz_2607（令和8年7月14日施行版）
 // 改正法（令和8年法律第47号）対応: イエローゾーン=対象施設の周囲おおむね1,000m・直罰化
@@ -917,7 +952,8 @@ function nfzPip_(x,y,ring){let ins=false;for(let i=0,j=ring.length-1;i<ring.leng
 function nfzIn_(x,y,z){if(!nfzPip_(x,y,z.c[0]))return false;for(let k=1;k<z.c.length;k++)if(nfzPip_(x,y,z.c[k]))return false;return true;}
 function checkNFZ(lat,lng){const covered=(lng>=NFZ_COVER[0]&&lng<=NFZ_COVER[2]&&lat>=NFZ_COVER[1]&&lat<=NFZ_COVER[3]);let rz=null,yz=null;for(const z of NFZ_DATA.rz){if(nfzIn_(lng,lat,z)){rz=z.n||'対象施設';break;}}if(!rz)for(const z of NFZ_DATA.yz){if(nfzIn_(lng,lat,z)){yz=z.n||'対象施設';break;}}return{rz:rz,yz:yz,covered:covered};}
 
-const HLS_URL='https://secure.kix-ap.ne.jp/fukuoka-airport/';
+const DIPS_URL='https://www.ossportal.dips.mlit.go.jp/portal/top/';
+let HLS_URL=AIRPORTS.fukuoka.hls;
 
 // ── v41: 機体・操縦者管理機能削除（localStorage不使用・毎回手入力） ──
 
@@ -926,10 +962,18 @@ function hav(a,b,c,d){
         x=Math.sin(dL/2)**2+Math.cos(a*D2R)*Math.cos(c*D2R)*Math.sin(dG/2)**2;
   return 2*ER*Math.asin(Math.sqrt(x));}
 
-// 制限表面チェック（水平表面・円錐表面のみ。進入表面は削除）
+// 制限表面チェック（水平表面・円錐表面・外側水平表面。進入表面は削除）
+// ★ v41修正・v42で全空港共通化確認: 円錐表面の勾配・範囲を各空港公式システム(map.js/constants.js)の計算式に合わせて是正
+//   公式式: h = ARPEL + 45 + (距離-4000)/50   ※勾配1:50（旧v40以前実装の1:20は誤り）
+//   航空法施行規則に基づく全国共通値（福岡・羽田・成田・関西・伊丹・中部・熊本の7空港で確認済み）:
+//   水平表面r=4,000m/+45m、円錐表面r=16,500mまで勾配1:50、外側水平表面r=24,000m/+295m（固定）
+//   ARP・ARPELのみ空港ごとに異なる（AIRPORTS定義参照）
 function checkSurf(lat,lng){
   const res=[];
   const d=hav(lat,lng,ARP.lat,ARP.lng);
+  // ARPELは空港切替で変わるため、都度算出（水平表面=ARPEL+45、外側水平表面=水平表面+250）
+  const SUIHEI_AMSL=Math.round((ARPEL+45)*10)/10;
+  const SOTOSUIHEI_AMSL=Math.round((SUIHEI_AMSL+250)*10)/10;
   // 小型無人機等飛行禁止法 判定（令和8年7月14日施行版・公式ポリゴン内包判定）
   const nfz=checkNFZ(lat,lng);
   res.nfzOut=!nfz.covered;
@@ -938,7 +982,7 @@ function checkSurf(lat,lng){
       desc:'対象施設の敷地・区域の上空。小型無人機等の飛行禁止（1年以下の拘禁刑又は50万円以下の罰金）',
       amsl:null,agl:null,dist:Math.round(d),
       vSub:`対象施設「${nfz.rz}」の敷地・区域の上空（レッドゾーン）\n小型無人機等飛行禁止法により飛行禁止`,
-      vRes:'DIPS2.0への申請対象外です\n飛行には施設管理者等の同意と公安委員会等への事前通報が必要\n'+(nfz.rz.indexOf('福岡空港')>=0?'お問い合わせ: 福岡国際空港(株) 092-623-0636':'施設管理者にお問い合わせください')});
+      vRes:'DIPS2.0への申請対象外です\n飛行には施設管理者等の同意と公安委員会等への事前通報が必要\n'+(nfz.rz.indexOf(AIRPORTS[currentAirportKey].name)>=0&&AIRPORTS[currentAirportKey].phone?`お問い合わせ: ${AIRPORTS[currentAirportKey].name} ${AIRPORTS[currentAirportKey].phone}`:'施設管理者にお問い合わせください')});
     return res;}
   if(nfz.yz){
     res.push({name:`小型無人機等飛行禁止法 イエローゾーン（${nfz.yz}）`,color:'#cc7700',req:true,prohibit:true,
@@ -949,12 +993,15 @@ function checkSurf(lat,lng){
     return res;}
   if(d<=4000){
     res.push({name:'水平表面',color:'#00d4ff',req:false,prohibit:false,
-      desc:'ARP半径4,000m以内・制限高45m（海抜EL+45m）',amsl:ARPEL+45,dist:Math.round(d)});}
-  if(d>4000&&d<=5600){
-    const r=(d-4000)/1600;
+      desc:'ARP半径4,000m以内・制限高45m（海抜EL+45m）',amsl:SUIHEI_AMSL,dist:Math.round(d)});}
+  else if(d<=16500){
     res.push({name:'円錐表面',color:'#ff9500',req:true,prohibit:false,
-      desc:'水平表面外縁〜1,600m外側・1:20勾配・許可申請必要',
-      amsl:Math.round((ARPEL+45+r*80)*10)/10,dist:Math.round(d)});}
+      desc:'水平表面外縁〜16,500m外側・1:50勾配・許可申請必要',
+      amsl:Math.round((SUIHEI_AMSL+(d-4000)/50)*10)/10,dist:Math.round(d)});}
+  else if(d<=24000){
+    res.push({name:'外側水平表面',color:'#4499ff',req:true,prohibit:false,
+      desc:`円錐表面外縁〜24,000m以内・制限高${SOTOSUIHEI_AMSL}m（海抜）・許可申請必要`,
+      amsl:SOTOSUIHEI_AMSL,dist:Math.round(d)});}
   return res;}
 
 async function getElev(lat,lng){
@@ -980,6 +1027,7 @@ async function revGeo(lat,lng){
   }catch{return null;}
 }
 let cLat=null,cLng=null,cAddr='',cRes=null,mapObj=null,mapPin=null,mapInited=false,gcTmr=null,apLayerGroup=null,apVisible=false,didLayer=null,didVisible=false;
+let arpMarker=null,waterCircle=null,conicalCircle=null,outerCircle=null,nfzLayerGroup=null;
 
 function switchMode(m){
   document.getElementById('tAddr').classList.toggle('active',m==='addr');
@@ -991,9 +1039,7 @@ function switchMode(m){
 
 function initMap(){
   mapInited=true;
-  // zoom=12: ARP(33.5844)〜奈多(33.6335)の約6.8kmが画面内に収まる
-  // center: ARP〜奈多の中間点
-  mapObj=L.map('map',{center:[33.5844,130.4517],zoom:14,tap:true,touchZoom:true,dragging:true});
+  mapObj=L.map('map',{center:[ARP.lat,ARP.lng],zoom:13,tap:true,touchZoom:true,dragging:true});
   L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution:'国土地理院',maxZoom:18}).addTo(mapObj);
 
   // ★ DID地区タイル（国土地理院・令和2年国勢調査版）
@@ -1021,35 +1067,40 @@ function initMap(){
   // ★ 進入/転移表面レイヤー（トグル切り替え・航空法定義の概算値）
   // 変数をinitMap外でも参照できるようグローバル化は下部で定義
 
-  // 外側水平表面 r=24km（参考・点線）
-  L.circle([ARP.lat,ARP.lng],{radius:24000,color:'#4499ff',weight:1,fillOpacity:0,dashArray:'5,8',opacity:0.4})
-    .addTo(mapObj).bindTooltip('外側水平表面（r=24km）',{sticky:true});
+  // 外側水平表面 r=24km・制限H304.1m（円錐表面外縁16.5km〜24km・許可必要）
+  outerCircle=L.circle([ARP.lat,ARP.lng],{radius:24000,color:'#4499ff',weight:1,fillColor:'#4499ff',fillOpacity:.04,dashArray:'5,8',opacity:0.4})
+    .addTo(mapObj).bindTooltip('外側水平表面（r=16.5〜24km・制限H304.1m）',{sticky:true});
 
-  // 円錐表面外縁 r=5.6km
-  L.circle([ARP.lat,ARP.lng],{radius:5600,color:'#ff9500',weight:1.5,fillColor:'#ff9500',fillOpacity:.07,dashArray:'5,5'})
-    .addTo(mapObj).bindTooltip('円錐表面外縁（r=5.6km）',{sticky:true});
+  // 円錐表面外縁 r=16.5km（高さが外側水平表面の304.1mに達する距離）
+  conicalCircle=L.circle([ARP.lat,ARP.lng],{radius:16500,color:'#ff9500',weight:1.5,fillColor:'#ff9500',fillOpacity:.07,dashArray:'5,5'})
+    .addTo(mapObj).bindTooltip('円錐表面外縁（r=16.5km）',{sticky:true});
 
   // 水平表面 r=4km
-  L.circle([ARP.lat,ARP.lng],{radius:4000,color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:.08})
+  waterCircle=L.circle([ARP.lat,ARP.lng],{radius:4000,color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:.08})
     .addTo(mapObj).bindTooltip('水平表面（r=4km・制限H45m）',{sticky:true});
 
-  // 小型無人機等飛行禁止法 区域（令和8年7月14日施行版・公式ポリゴン埋め込み）
+  // 小型無人機等飛行禁止法 区域（令和8年7月14日施行版・公式ポリゴン埋め込み・福岡周辺のみ収載）
   mapObj.createPane('nfzPane');
   mapObj.getPane('nfzPane').style.filter='none';
   mapObj.getPane('nfzPane').style.zIndex='455';
+  nfzLayerGroup=L.layerGroup();
   const nfzLL=z=>z.c.map(ring=>ring.map(p=>[p[1],p[0]]));
   NFZ_DATA.yz.forEach(z=>{
     L.polygon(nfzLL(z),{pane:'nfzPane',color:'#cc8800',weight:1.5,fillColor:'#ffff00',fillOpacity:.22})
-      .addTo(mapObj).bindTooltip((z.n||'対象施設')+'：イエローゾーン（周囲おおむね1,000m・飛行禁止）',{sticky:true});});
+      .addTo(nfzLayerGroup).bindTooltip((z.n||'対象施設')+'：イエローゾーン（周囲おおむね1,000m・飛行禁止）',{sticky:true});});
   NFZ_DATA.rz.forEach(z=>{
     L.polygon(nfzLL(z),{pane:'nfzPane',color:'#ff2200',weight:1.5,fillColor:'#ff2200',fillOpacity:.3})
-      .addTo(mapObj).bindTooltip((z.n||'対象施設')+'：レッドゾーン（対象施設・飛行禁止）',{sticky:true});});
+      .addTo(nfzLayerGroup).bindTooltip((z.n||'対象施設')+'：レッドゾーン（対象施設・飛行禁止）',{sticky:true});});
+  // NFZデータは福岡周辺のみ収載のため、選択中の空港がその範囲内の場合のみ表示
+  if(NFZ_COVER[0]<=ARP.lng&&ARP.lng<=NFZ_COVER[2]&&NFZ_COVER[1]<=ARP.lat&&ARP.lat<=NFZ_COVER[3]){
+    nfzLayerGroup.addTo(mapObj);
+  }
 
   // ARPマーカー
-  L.marker([ARP.lat,ARP.lng],{icon:L.divIcon({
+  arpMarker=L.marker([ARP.lat,ARP.lng],{icon:L.divIcon({
     html:'<div style="font-size:22px;filter:drop-shadow(0 0 6px #0080ff)">✈</div>',
     iconSize:[28,28],iconAnchor:[14,14],className:''})
-  }).bindTooltip('福岡空港(ARP)').addTo(mapObj);
+  }).bindTooltip(AIRPORTS[currentAirportKey].name+'(ARP)').addTo(mapObj);
 
 
 
@@ -1181,6 +1232,46 @@ function setAddrDisp(addr){
   const ai=document.getElementById('addrIn');
   if(ai&&ai.value==='')ai.value=addr;}
 
+// ★ v42: 空港切替（水平表面・円錐表面・外側水平表面のARP/標高/公式URLを切替。地点・解析結果はリセット）
+function switchAirport(key){
+  const ap=AIRPORTS[key];
+  if(!ap)return;
+  currentAirportKey=key;
+  ARP=ap.arp;ARPEL=ap.arpel;HLS_URL=ap.hls;
+
+  // 解析結果・地点をリセット（空港が変われば制限表面も変わるため）
+  cRes=null;cLat=null;cLng=null;cAddr='';
+  document.getElementById('panelResult').innerHTML='';
+  document.getElementById('dLat').textContent='—';document.getElementById('dLat').classList.remove('set');
+  document.getElementById('dLng').textContent='—';document.getElementById('dLng').classList.remove('set');
+  document.getElementById('dAddr').textContent='住所を入力または地図をタップ';document.getElementById('dAddr').classList.remove('set');
+  const ai=document.getElementById('addrIn');if(ai)ai.value='';
+  const sg=document.getElementById('sg');if(sg)sg.style.display='none';
+
+  if(mapInited){
+    if(mapPin){mapObj.removeLayer(mapPin);mapPin=null;}
+    mapObj.setView([ap.arp.lat,ap.arp.lng],13);
+    if(arpMarker){arpMarker.setLatLng([ap.arp.lat,ap.arp.lng]);arpMarker.setTooltipContent(ap.name+'(ARP)');}
+    if(waterCircle)waterCircle.setLatLng([ap.arp.lat,ap.arp.lng]);
+    if(conicalCircle)conicalCircle.setLatLng([ap.arp.lat,ap.arp.lng]);
+    if(outerCircle)outerCircle.setLatLng([ap.arp.lat,ap.arp.lng]);
+
+    // 進入/転移表面は福岡専用データのため、他空港では非表示・トグル無効化
+    if(apVisible&&key!=='fukuoka'){mapObj.removeLayer(apLayerGroup);apVisible=false;
+      const btn=document.getElementById('apToggle');
+      if(btn){btn.classList.remove('on');btn.innerHTML='<div class="ltbtn-dot" style="background:#ff6666;opacity:.5"></div>進入/転移表面';}}
+    const apBtn=document.getElementById('apToggle');
+    if(apBtn)apBtn.style.opacity=(key==='fukuoka')?'1':'.4';
+
+    // 小型無人機等飛行禁止法データは福岡周辺のみ収載
+    if(nfzLayerGroup){
+      const covered=NFZ_COVER[0]<=ap.arp.lng&&ap.arp.lng<=NFZ_COVER[2]&&NFZ_COVER[1]<=ap.arp.lat&&ap.arp.lat<=NFZ_COVER[3];
+      if(covered){nfzLayerGroup.addTo(mapObj);}else{mapObj.removeLayer(nfzLayerGroup);}
+    }
+  }
+  toast(`${ap.name}に切り替えました`);
+}
+
 const addrEl=document.getElementById('addrIn'),sgEl=document.getElementById('sg');
 addrEl.addEventListener('input',()=>{
   clearTimeout(gcTmr);const v=addrEl.value.trim();
@@ -1238,9 +1329,9 @@ async function startAnalysis(){
     const prohibit=surfs.some(s=>s.prohibit);
     const reqC=surfs.some(s=>s.req);
     cRes={lat:cLat,lng:cLng,addr:cAddr,elev,surfs,mr,reqC,prohibit,
-      desAlt:100,
-      purp:'',
-      time:'',
+      desAlt:parseFloat(document.getElementById('iAlt').value)||100,
+      purp:document.getElementById('sPurp').value,
+      time:document.getElementById('iTime').value,
       aircraft: document.getElementById('iAircraftName').value.trim() || '未入力',
       pilot: document.getElementById('iPilotName').value.trim() || '未入力'};
     renderResult(cRes);setP(100);
@@ -1249,6 +1340,10 @@ async function startAnalysis(){
   catch(e){toast('解析エラー: '+e.message);console.error(e);}
   btn.disabled=false;btn.innerHTML='▶ 制限高度を自動解析';}
 
+function contactBlock(){
+  const ap=AIRPORTS[currentAirportKey];
+  return ap.phone?`📞 ${ap.name}(株)\n　${ap.phone}（平日9:00〜17:30）`:`📞 ${ap.name} 設置管理者\n　公式高さ制限回答システムでご確認ください`;
+}
 function renderResult(res){
   const{elev,surfs,mr,reqC,prohibit,desAlt}=res;
   const dipsAGL=mr?mr.agl:null;
@@ -1266,16 +1361,16 @@ function renderResult(res){
     if(mr.req){
       verdictClass='verdict-ng';verdictIcon='⚠';
       verdictTitle='申請前に空港設置管理者への連絡必須';
-      verdictSub='円錐表面エリアは空港設置管理者の調整が必要\n事前連絡なしでは申請を受け付けてもらえません';
+      verdictSub=`${mr.name}エリアは空港設置管理者の調整が必要\n事前連絡なしでは申請を受け付けてもらえません`;
       if(elevOK&&dipsAGL!==null){
-        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n⚠ ただし事前連絡・調整が必要\n\n📞 福岡国際空港(株)\n　092-623-0636（平日9:00〜17:30）\n\n★ 公式高さ制限システムで必ず再確認してください`;}
+        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n⚠ ただし事前連絡・調整が必要\n\n${contactBlock()}\n\n★ 公式高さ制限システムで必ず再確認してください`;}
       else{verdictResult=`⚠ 地点標高の取得に失敗\n公式システムで制限高度と標高を確認してください\n制限高度（海抜）: ${mr.amsl}m`;}}
     else{
       if(elevOK&&dipsAGL!==null&&desAlt>dipsAGL){
         verdictClass='verdict-ng';verdictIcon='⚠';
         verdictTitle='空港事務所への連絡が必要です';
         verdictSub='水平表面内です。希望高度が制限高度を超えています\n飛行前に必ず空港設置管理者へ連絡してください';
-        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n希望高度 ${desAlt}m → 制限超過\n\n📞 福岡国際空港(株)\n　092-623-0636（平日9:00〜17:30）\n\n★ 公式高さ制限システムで必ず再確認してください`;}
+        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n希望高度 ${desAlt}m → 制限超過\n\n${contactBlock()}\n\n★ 公式高さ制限システムで必ず再確認してください`;}
       else{
         verdictClass='verdict-warn';verdictIcon='🔶';
         verdictTitle='飛行申請可（高度制限あり）';
@@ -1286,8 +1381,8 @@ function renderResult(res){
   }
   else if(surfs.length===0){
     verdictClass='verdict-ok';verdictIcon='✅';
-    verdictTitle='制限表面の外側（水平・円錐）';
-    verdictSub='水平表面・円錐表面の範囲外です';
+    verdictTitle='制限表面の外側（水平・円錐・外側水平）';
+    verdictSub='水平表面・円錐表面・外側水平表面（ARP半径24km）の範囲外です';
     verdictResult=`事前連絡不要（公式システムで最終確認を推奨）\nDIPS2.0で申請してください`;}
   else{
     verdictClass='verdict-warn';verdictIcon='🔶';
@@ -1324,7 +1419,7 @@ function renderResult(res){
           <div><div style="font-size:11px;color:var(--dim)">経度</div><div style="font-size:17px;color:var(--cy);font-weight:700">${res.lng.toFixed(5)}</div></div>
         </div>
       </div>
-      ${surfs.length===0?`<div style="background:#0a1a0a;border:1px solid #1a4420;border-radius:10px;padding:12px;color:#44cc66;font-size:13px;margin-bottom:12px">✅ 水平表面・円錐表面の外側です</div>`:surfHTML}
+      ${surfs.length===0?`<div style="background:#0a1a0a;border:1px solid #1a4420;border-radius:10px;padding:12px;color:#44cc66;font-size:13px;margin-bottom:12px">✅ 水平表面・円錐表面・外側水平表面の外側です</div>`:surfHTML}
       <div class="verdict ${verdictClass}">
         <div class="v-icon">${verdictIcon}</div>
         <div class="v-title" style="color:${prohibit?'#a01800':surfs.length===0?'#006633':reqC?'#a01800':'#995500'}">${verdictTitle}</div>
@@ -1337,8 +1432,8 @@ function renderResult(res){
         <button class="ext-btn btn-hls" onclick="openHLS()">
           <div class="icon">🔍</div>
           <div class="info">
-            <span class="name">福岡空港 高さ制限回答システム</span>
-            <span class="desc">進入・転移表面等の正確な制限高度を確認（住所が自動コピーされます）</span>
+            <span class="name">${AIRPORTS[currentAirportKey].name} 高さ制限回答システム</span>
+            <span class="desc">進入・転移表面等を含む正確な制限高度を確認（住所が自動コピーされます）</span>
           </div>
           <div style="font-size:18px;opacity:.6">›</div>
         </button>
@@ -1350,7 +1445,14 @@ function renderResult(res){
           </div>
           <div style="font-size:18px;opacity:.6">›</div>
         </button>
-
+        <button class="ext-btn btn-dips2" onclick="openDIPS()">
+          <div class="icon">🌐</div>
+          <div class="info">
+            <span class="name">DIPS2.0 飛行申請システム</span>
+            <span class="desc">国土交通省 ドローン情報基盤システムで飛行申請</span>
+          </div>
+          <div style="font-size:18px;opacity:.6">›</div>
+        </button>
       </div>
     </div></div>`;
 
@@ -1379,29 +1481,41 @@ function renderResult(res){
           altVal!==null?
           `<div class="drow"><span class="dk" style="color:var(--acc);font-weight:700">▶ DIPS入力高度（地上）</span>
             <span class="dv" style="font-size:30px;color:var(--cy);line-height:1">${altVal}<span style="font-size:14px">m</span></span></div>
-          ${reqC?`<div class="drow"><span class="dk" style="color:var(--warn)">⚠ 事前連絡後に申請</span><span class="dv" style="color:var(--warn)">092-623-0636</span></div>`:''}`
+          ${reqC?`<div class="drow"><span class="dk" style="color:var(--warn)">⚠ 事前連絡後に申請</span><span class="dv" style="color:var(--warn)">${AIRPORTS[currentAirportKey].phone||'公式システムで確認'}</span></div>`:''}`
           :`<div class="drow"><span class="dk">DIPS入力高度</span><span class="dv" style="color:var(--dim)">公式システムで確認後に入力</span></div>`}
       </div>
       ${!prohibit&&altVal!==null?
         `<button class="btn-copy" style="width:100%;height:54px;margin-bottom:12px;font-size:16px" onclick="copyAlt()">📋 高度値コピー　<strong style="color:#ffffff;font-size:20px">${altVal}m</strong></button>`:''}
 
+      <!-- ★ DIPS2.0ボタン（メイン） -->
+      <button class="btn-dips" onclick="openDIPS()">
+        🌐 DIPS2.0 を今すぐ開く
+      </button>
+
     </div></div>
     <div class="notice">
-      <strong>⚠ 免責事項：</strong>水平表面・円錐表面の高さ制限を計算しています。
-      進入表面・転移表面はAIP RJFF（官報告示）の座標を元にした概算ポリゴンです。正確な制限高度は公式「高さ制限回答システム」で必ず確認してください。
+      <strong>⚠ 免責事項：</strong>全7空港共通で水平表面・円錐表面・外側水平表面の高さ制限を計算しています（航空法施行規則に基づく全国共通の勾配・半径を使用）。
+      進入表面・転移表面・小型無人機等飛行禁止法データは福岡空港のみ収載（AIP RJFF等の座標を元にした概算ポリゴン）です。他空港も含め、正確な制限高度は必ず公式「高さ制限回答システム」で確認してください。
       本ツールの結果のみで飛行判断を行わないでください。
     </div>`;
 
   document.getElementById('panelResult').style.display='block';
+  document.getElementById('panelDIPS').style.display='block';
   setTimeout(()=>document.getElementById('panelResult').scrollIntoView({behavior:'smooth',block:'start'}),100);
   // 解析結果をsessionStorageに保存（外部リンクから戻った時に復元）
   try{sessionStorage.setItem('dips_cRes', JSON.stringify(cRes));}catch(e){}
 }
 
-
+// ★ DIPS2.0を開く
+function openDIPS(){
+  const w=window.open(DIPS_URL,'_blank','noopener');
+  if(w){w.focus();return;}
+  clipCopy(DIPS_URL,'DIPS2.0 URLをコピーしました。ブラウザのアドレスバーに貼り付けてください','URLをコピーして開いてください:');
+}
 
 // ★ 進入/転移表面トグル
 function toggleApproach(){
+  if(currentAirportKey!=='fukuoka'){toast('進入/転移表面は現在、福岡空港のみ収載しています');return;}
   if(!mapInited){switchMode('map');return;}
   if(!apLayerGroup)return;
   apVisible=!apVisible;
@@ -1454,10 +1568,11 @@ function makeBm(res,alt){
   const surf=res.mr?(res.mr.name||'').replace(/'/g,"\\'"):'';
   const aircraft=(res.aircraft||'').replace(/'/g,"\\'");
   const pilot=(res.pilot||'').replace(/'/g,"\\'");
-  const code=`(function(){var d=document,filled=[];function set(el,v){el.value=v;['input','change','blur'].forEach(function(ev){el.dispatchEvent(new Event(ev,{bubbles:true}))});el.style.outline='2px solid #00cc66'}function tryFill(sels,val,lbl){for(var i=0;i<sels.length;i++){var els=d.querySelectorAll(sels[i]);for(var j=0;j<els.length;j++){if(els[j].offsetParent!==null){set(els[j],val);filled.push(lbl);return true}}}return false}function byText(texts,val,lbl){var all=d.querySelectorAll('input:not([type=hidden]),select,textarea');for(var i=0;i<all.length;i++){var el=all[i],id=el.id||'',nm=el.name||'',ph=(el.placeholder||'').toLowerCase();var lbs=d.querySelectorAll('label[for="'+id+'"]'),lt='';for(var k=0;k<lbs.length;k++)lt+=lbs[k].textContent;var c=(id+' '+nm+' '+ph+' '+lt).toLowerCase();for(var t=0;t<texts.length;t++){if(c.indexOf(texts[t].toLowerCase())>=0){set(el,val);filled.push(lbl);return true}}}return false}${alt>0?`var af=tryFill(['[name*=altitude],[name*=height],[name*=alt]','[id*=altitude],[id*=height],[id*=alt]'],'${alt}','高度');if(!af)byText(['高度','飛行高','altitude','height'],'${alt}','高度');`:''}tryFill(['[name*=address],[id*=address]'],'${addr}','住所')||byText(['住所'],'${addr}','住所');tryFill(['[name*=lat],[id*=lat]'],'${lat}','緯度')||byText(['緯度','lat'],'${lat}','緯度');tryFill(['[name*=lng],[id*=lng],[name*=lon]'],'${lng}','経度')||byText(['経度','lng'],'${lng}','経度');${aircraft?`byText(['機体','aircraft','drone'],'${aircraft}','機体');`:''}${pilot?`byText(['操縦者','pilot','operator'],'${pilot}','操縦者');`:''}var msg='【DIPS自動入力完了】\\n地点: ${addr}\\n緯度/経度: ${lat}/${lng}\\n標高: ${el}m';${aircraft?`msg+='\\n機体: ${aircraft}';`:''}${pilot?`msg+='\\n操縦者: ${pilot}';`:''}${surf?`msg+='\\n制限表面: ${surf}';`:''}${alt>0?`msg+='\\n▶ 飛行高度: ${alt}m AGL';`:''}${req?`msg+='\\n⚠ 要事前連絡: 092-623-0636';`:''}msg+='\\n入力済: '+(filled.length?filled.join(', '):'未検出');alert(msg)})()`;
+  const code=`(function(){var d=document,filled=[];function set(el,v){el.value=v;['input','change','blur'].forEach(function(ev){el.dispatchEvent(new Event(ev,{bubbles:true}))});el.style.outline='2px solid #00cc66'}function tryFill(sels,val,lbl){for(var i=0;i<sels.length;i++){var els=d.querySelectorAll(sels[i]);for(var j=0;j<els.length;j++){if(els[j].offsetParent!==null){set(els[j],val);filled.push(lbl);return true}}}return false}function byText(texts,val,lbl){var all=d.querySelectorAll('input:not([type=hidden]),select,textarea');for(var i=0;i<all.length;i++){var el=all[i],id=el.id||'',nm=el.name||'',ph=(el.placeholder||'').toLowerCase();var lbs=d.querySelectorAll('label[for="'+id+'"]'),lt='';for(var k=0;k<lbs.length;k++)lt+=lbs[k].textContent;var c=(id+' '+nm+' '+ph+' '+lt).toLowerCase();for(var t=0;t<texts.length;t++){if(c.indexOf(texts[t].toLowerCase())>=0){set(el,val);filled.push(lbl);return true}}}return false}${alt>0?`var af=tryFill(['[name*=altitude],[name*=height],[name*=alt]','[id*=altitude],[id*=height],[id*=alt]'],'${alt}','高度');if(!af)byText(['高度','飛行高','altitude','height'],'${alt}','高度');`:''}tryFill(['[name*=address],[id*=address]'],'${addr}','住所')||byText(['住所'],'${addr}','住所');tryFill(['[name*=lat],[id*=lat]'],'${lat}','緯度')||byText(['緯度','lat'],'${lat}','緯度');tryFill(['[name*=lng],[id*=lng],[name*=lon]'],'${lng}','経度')||byText(['経度','lng'],'${lng}','経度');${aircraft?`byText(['機体','aircraft','drone'],'${aircraft}','機体');`:''}${pilot?`byText(['操縦者','pilot','operator'],'${pilot}','操縦者');`:''}var msg='【DIPS自動入力完了】\\n地点: ${addr}\\n緯度/経度: ${lat}/${lng}\\n標高: ${el}m';${aircraft?`msg+='\\n機体: ${aircraft}';`:''}${pilot?`msg+='\\n操縦者: ${pilot}';`:''}${surf?`msg+='\\n制限表面: ${surf}';`:''}${alt>0?`msg+='\\n▶ 飛行高度: ${alt}m AGL';`:''}${req?`msg+='\\n⚠ 要事前連絡: ${AIRPORTS[currentAirportKey].phone||'公式システムで確認'}';`:''}msg+='\\n入力済: '+(filled.length?filled.join(', '):'未検出');alert(msg)})()`;
   return 'javascript:'+encodeURIComponent(code);}
 
 function copyHLS(){clipCopy(HLS_URL,'公式システムURLをコピーしました','SafariにコピーしてDIPSシステムを開いてください:');}
+function copyURL(){clipCopy(DIPS_URL,'DIPS2.0 URLをコピーしました','Safariのアドレスバーに貼り付けてください:');}
 function copyAlt(){if(!cRes)return;const mr=cRes.mr;if(!mr||cRes.prohibit)return;
   const v=mr.agl??0;
   clipCopy(String(v),`飛行高度 ${v}m をコピーしました`,'コピーしてください:');}
@@ -1470,12 +1585,12 @@ function copyAll(){if(!cRes)return;const r=cRes,mr=r.mr;const elevOK=r.elev!==nu
     mr?`制限表面: ${mr.name}`:'制限表面: 公式システムで確認',
     mr&&mr.amsl?`制限高度（海抜）: ${mr.amsl}m`:'',
     (mr&&!r.prohibit&&mr.agl!==null)?`▶ DIPS入力高度（地上）: ${mr.agl}m`:'',
-    r.prohibit?'🚫 飛行禁止区域':r.reqC?'⚠ 要事前連絡: 092-623-0636（平日9:00〜17:30）':'✓ 事前連絡不要',
+    r.prohibit?'🚫 飛行禁止区域':r.reqC?`⚠ 要事前連絡: ${AIRPORTS[currentAirportKey].phone?AIRPORTS[currentAirportKey].phone+'（平日9:00〜17:30）':'公式システムで確認'}`:'✓ 事前連絡不要',
     `★ 公式確認: ${HLS_URL}`,
   ].filter(Boolean).join('\n');
   clipCopy(lines,'全データをコピーしました','コピーしてください:');}
 function toast(msg){const e=document.createElement('div');e.className='toast';e.textContent='✓ '+msg;document.body.appendChild(e);setTimeout(()=>e.remove(),2500);}
-function setP(v){const p=document.getElementById('prog');if(p)p.style.width=v+'%';}
+function setP(v){document.getElementById('prog').style.width=v+'%';}
 </script>
 </body>
 </html>
