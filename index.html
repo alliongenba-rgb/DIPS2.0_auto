@@ -838,6 +838,9 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
           <button class="tab active" id="tAddr" onclick="switchMode('addr')">🔍 住所入力</button>
           <button class="tab" id="tMap" onclick="switchMode('map')">🗺 地図タップ</button>
         </div>
+        <button id="gpsBtn" onclick="useGPS()" style="width:100%;height:var(--tap);margin:10px 0;border:1px solid #2266cc;border-radius:10px;background:linear-gradient(135deg,#1a4a8a,#0d2a55);color:#ffffff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span id="gpsBtnIcon">📍</span><span id="gpsBtnLabel">現在地を使用（GPS）</span>
+        </button>
         <div id="mAddr">
           <div class="fg">
             <label class="fl">住所（番地まで入力）</label>
@@ -1223,6 +1226,44 @@ function setPin(lat,lng){
       if(addr&&addr.length>0){cAddr=addr;setAddrDisp(addr);}
       else{el.textContent='住所取得できませんでした（公式システムで確認）';el.classList.remove('set');cAddr='';}
     }).catch(()=>{el.textContent='住所取得できませんでした（公式システムで確認）';el.classList.remove('set');cAddr='';});});}
+
+// ★ 現在地（携帯GPS）を飛行地点として使用
+function useGPS(){
+  if(window.location.protocol==='file:'){
+    toast('⚠ ローカルファイルではGPS機能が使えません。GitHubPages版（https）を開いてください');return;}
+  if(!navigator.geolocation){toast('この端末・ブラウザは位置情報取得に対応していません');return;}
+
+  const btn=document.getElementById('gpsBtn'),icon=document.getElementById('gpsBtnIcon'),lbl=document.getElementById('gpsBtnLabel');
+  btn.disabled=true;icon.textContent='';icon.innerHTML='<span class="sp"></span>';lbl.textContent='現在地を取得中...';
+
+  const done=(msg)=>{btn.disabled=false;icon.textContent='📍';lbl.textContent='現在地を使用（GPS）';if(msg)toast(msg);};
+
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy;
+      if(!mapInited)switchMode('map');
+      setTimeout(()=>{
+        mapObj.setView([lat,lng],17);
+        setPin(lat,lng);
+        const el=document.getElementById('dAddr');
+        el.textContent='📍 住所を取得中...';el.classList.remove('set');
+        revGeo(lat,lng).then(addr=>{
+          if(addr&&addr.length>0){cAddr=addr;setAddrDisp(addr);}
+          else{el.textContent='住所取得できませんでした（公式システムで確認）';el.classList.remove('set');cAddr='';}
+        }).catch(()=>{el.textContent='住所取得できませんでした（公式システムで確認）';el.classList.remove('set');cAddr='';});
+        done(`📍 現在地を取得しました（精度: 約${Math.round(acc)}m）\nピンをドラッグして正確な位置に調整してください`);
+      },mapInited?0:300);
+    },
+    (err)=>{
+      let m='現在地の取得に失敗しました';
+      if(err.code===err.PERMISSION_DENIED)m='位置情報の利用が許可されていません。ブラウザの設定でこのサイトの位置情報アクセスを許可してください';
+      else if(err.code===err.POSITION_UNAVAILABLE)m='現在地を特定できませんでした。電波状況の良い場所で再度お試しください';
+      else if(err.code===err.TIMEOUT)m='現在地の取得がタイムアウトしました。再度お試しください';
+      done('⚠ '+m);
+    },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+  );
+}
 
 function setAddrDisp(addr){
   if(!addr||addr.length===0)return;
