@@ -764,9 +764,6 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .copy-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .btn-copy{height:46px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;background:#1a4a8a;color:#ffffff;border:1px solid #2266cc}
 .btn-copy:active{background:#2266cc}
-/* ★ DIPSボタン（大・目立つ） */
-.btn-dips{width:100%;height:68px;background:linear-gradient(135deg,#004400,#00aa00);color:#fff;border:none;border-radius:14px;cursor:pointer;font-size:19px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 0 30px rgba(0,200,0,.5);transition:all .2s;margin-bottom:8px;letter-spacing:.02em}
-.btn-dips:active{transform:scale(.97);opacity:.85}
 .dips-note{font-size:11px;color:#336633;text-align:center;margin-bottom:14px;line-height:1.7}
 .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:700}
 .cok{background:#003300;border:1px solid #005500;color:var(--ok)}.cdng{background:#2a0000;border:1px solid #550000;color:var(--dng)}
@@ -804,7 +801,6 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
 .ext-btn .desc{font-size:10px;opacity:.7;font-weight:400}
 .btn-hls{background:linear-gradient(135deg,#002244,#003a77);border:1px solid #0055aa;color:#88ccff}
 .btn-gsi{background:linear-gradient(135deg,#001a00,#003300);border:1px solid #005500;color:#88ee88}
-.btn-dips2{background:linear-gradient(135deg,#1a0500,#3a0c00);border:1px solid #7a2200;color:#ffaa66}
 </style>
 </head>
 <body>
@@ -824,12 +820,6 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
   </div>
 </header>
 <div class="wrap">
-  <div class="steps">
-    <div class="si active" id="s1"><span class="sn">1</span><div class="sl">地点入力</div></div>
-    <div class="si" id="s2"><span class="sn">2</span><div class="sl">解析</div></div>
-    <div class="si" id="s3"><span class="sn">3</span><div class="sl">DIPS登録</div></div>
-  </div>
-  <div class="pw"><div class="pf" id="prog" style="width:5%"></div></div>
   <div id="panelInput">
     <div class="card">
       <div class="card-head">飛行地点の入力</div>
@@ -955,7 +945,6 @@ function nfzPip_(x,y,ring){let ins=false;for(let i=0,j=ring.length-1;i<ring.leng
 function nfzIn_(x,y,z){if(!nfzPip_(x,y,z.c[0]))return false;for(let k=1;k<z.c.length;k++)if(nfzPip_(x,y,z.c[k]))return false;return true;}
 function checkNFZ(lat,lng){const covered=(lng>=NFZ_COVER[0]&&lng<=NFZ_COVER[2]&&lat>=NFZ_COVER[1]&&lat<=NFZ_COVER[3]);let rz=null,yz=null;for(const z of NFZ_DATA.rz){if(nfzIn_(lng,lat,z)){rz=z.n||'対象施設';break;}}if(!rz)for(const z of NFZ_DATA.yz){if(nfzIn_(lng,lat,z)){yz=z.n||'対象施設';break;}}return{rz:rz,yz:yz,covered:covered};}
 
-const DIPS_URL='https://www.ossportal.dips.mlit.go.jp/portal/top/';
 let HLS_URL=AIRPORTS.fukuoka.hls;
 
 // ── v41: 機体・操縦者管理機能削除（localStorage不使用・毎回手入力） ──
@@ -1375,9 +1364,7 @@ async function startAnalysis(){
       time:document.getElementById('iTime').value,
       aircraft: document.getElementById('iAircraftName').value.trim() || '未入力',
       pilot: document.getElementById('iPilotName').value.trim() || '未入力'};
-    renderResult(cRes);setP(100);
-    ['s1','s2','s3'].forEach((id,i)=>{const e=document.getElementById(id);
-      e.classList.remove('active','done');if(i<2)e.classList.add('done');else e.classList.add('active');});}
+    renderResult(cRes);setP(100);}
   catch(e){toast('解析エラー: '+e.message);console.error(e);}
   btn.disabled=false;btn.innerHTML='▶ 制限高度を自動解析';}
 
@@ -1486,14 +1473,6 @@ function renderResult(res){
           </div>
           <div style="font-size:18px;opacity:.6">›</div>
         </button>
-        <button class="ext-btn btn-dips2" onclick="openDIPS()">
-          <div class="icon">🌐</div>
-          <div class="info">
-            <span class="name">DIPS2.0 飛行申請システム</span>
-            <span class="desc">国土交通省 ドローン情報基盤システムで飛行申請</span>
-          </div>
-          <div style="font-size:18px;opacity:.6">›</div>
-        </button>
       </div>
     </div></div>`;
 
@@ -1527,12 +1506,6 @@ function renderResult(res){
       </div>
       ${!prohibit&&altVal!==null?
         `<button class="btn-copy" style="width:100%;height:54px;margin-bottom:12px;font-size:16px" onclick="copyAlt()">📋 高度値コピー　<strong style="color:#ffffff;font-size:20px">${altVal}m</strong></button>`:''}
-
-      <!-- ★ DIPS2.0ボタン（メイン） -->
-      <button class="btn-dips" onclick="openDIPS()">
-        🌐 DIPS2.0 を今すぐ開く
-      </button>
-
     </div></div>
     <div class="notice">
       <strong>⚠ 免責事項：</strong>全7空港共通で水平表面・円錐表面・外側水平表面の高さ制限を計算しています（航空法施行規則に基づく全国共通の勾配・半径を使用）。
@@ -1545,13 +1518,6 @@ function renderResult(res){
   setTimeout(()=>document.getElementById('panelResult').scrollIntoView({behavior:'smooth',block:'start'}),100);
   // 解析結果をsessionStorageに保存（外部リンクから戻った時に復元）
   try{sessionStorage.setItem('dips_cRes', JSON.stringify(cRes));}catch(e){}
-}
-
-// ★ DIPS2.0を開く
-function openDIPS(){
-  const w=window.open(DIPS_URL,'_blank','noopener');
-  if(w){w.focus();return;}
-  clipCopy(DIPS_URL,'DIPS2.0 URLをコピーしました。ブラウザのアドレスバーに貼り付けてください','URLをコピーして開いてください:');
 }
 
 // ★ 進入/転移表面トグル
@@ -1613,7 +1579,6 @@ function makeBm(res,alt){
   return 'javascript:'+encodeURIComponent(code);}
 
 function copyHLS(){clipCopy(HLS_URL,'公式システムURLをコピーしました','SafariにコピーしてDIPSシステムを開いてください:');}
-function copyURL(){clipCopy(DIPS_URL,'DIPS2.0 URLをコピーしました','Safariのアドレスバーに貼り付けてください:');}
 function copyAlt(){if(!cRes)return;const mr=cRes.mr;if(!mr||cRes.prohibit)return;
   const v=mr.agl??0;
   clipCopy(String(v),`飛行高度 ${v}m をコピーしました`,'コピーしてください:');}
@@ -1631,7 +1596,7 @@ function copyAll(){if(!cRes)return;const r=cRes,mr=r.mr;const elevOK=r.elev!==nu
   ].filter(Boolean).join('\n');
   clipCopy(lines,'全データをコピーしました','コピーしてください:');}
 function toast(msg){const e=document.createElement('div');e.className='toast';e.textContent='✓ '+msg;document.body.appendChild(e);setTimeout(()=>e.remove(),2500);}
-function setP(v){document.getElementById('prog').style.width=v+'%';}
+function setP(v){const p=document.getElementById('prog');if(p)p.style.width=v+'%';}
 </script>
 </body>
 </html>
