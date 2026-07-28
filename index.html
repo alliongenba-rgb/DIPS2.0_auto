@@ -862,8 +862,8 @@ select{color:var(--txt);cursor:pointer}select option{background:var(--inp)}
             <div class="legend-row"><div class="ll" style="background:#ff2200"></div>レッドゾーン（対象施設・飛行禁止・福岡周辺のみ収載）</div>
             <div class="legend-row"><div class="ll" style="background:#ffff00"></div>イエローゾーン（周囲約1,000m・飛行禁止・福岡周辺のみ収載）</div>
             <div class="legend-row"><div class="lb" style="background:rgba(255,80,0,.3);border-color:#ff5500"></div>DID地区（人口集中地区）※zoom12以上で表示</div>
-            <div class="legend-row"><div class="ll" style="background:#ff5555;opacity:.7"></div>進入表面（右上ボタンでON/OFF・概算値・福岡空港のみ）</div>
-            <div class="legend-row"><div class="ll" style="background:#ffaa44;opacity:.7"></div>転移表面（右上ボタンでON/OFF・概算値・福岡空港のみ）</div>
+            <div class="legend-row"><div class="ll" style="background:#ff5555;opacity:.7"></div>進入表面（地図色分け表示は福岡空港のみ概算・判定計算は熊本/関西/セントレアのみ対応）</div>
+            <div class="legend-row"><div class="ll" style="background:#ffaa44;opacity:.7"></div>転移表面（同上）</div>
           </div>
         </div>
         <div class="coord-grid">
@@ -925,16 +925,89 @@ function execCopy(text, successMsg, failMsg) {
 
 const D2R=Math.PI/180,R2D=180/Math.PI,ER=6371000;
 
-// ★ v42: 全国7空港対応（水平表面・円錐表面・外側水平表面のみ。進入/転移表面・小型無人機等飛行禁止法データは福岡のみ）
+// ★ v43: 進入表面・転移表面・延長進入表面（実際の高さ判定に使用する精密ポリゴン）を
+//   熊本・関西(A/B)・セントレアの4滑走路に追加。各空港公式システム(constants.js/map.bundle.js)の
+//   CD座標・計算式（進入表面=方位角+距離の直角三角形、転移表面=着陸帯端との高低差按分／
+//   進入表面接線との交点距離、いずれも公式のgetLimitHeightOfApproachSurface等を忠実に移植）をそのまま使用。
+function bearing_(lat1,lng1,lat2,lng2){
+  const p1=lat1*D2R,p2=lat2*D2R,dl=(lng2-lng1)*D2R;
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return Math.atan2(y,x)*R2D;
+}
+function polyContainsLL_(lat,lng,pts){
+  return nfzPip_(lng,lat,pts.map(p=>[p[1],p[0]]));
+}
+// 進入表面: 着陸帯端中心から進入表面中心への方位・距離を用いた直角三角形の公式（公式getLimitHeightOfApproachSurfaceを移植）
+function hAppr_(P,centerK,apprK,rh,lat,lng){
+  const c=P[centerK],a=P[apprK];
+  const hd1=bearing_(c[0],c[1],a[0],a[1]),hd2=bearing_(c[0],c[1],lat,lng);
+  const rad=Math.abs(hd1-hd2)*D2R;
+  const hyp=hav(c[0],c[1],lat,lng);
+  return rh+hyp*Math.cos(rad)*(1/50);
+}
+// 転移表面（着陸帯に接する側・四角形）: 着陸帯両端の高低差を按分し、着陸帯端からの距離に1:7勾配を加算
+function hTransQuad_(P,c1K,c2K,h1,h2,length,width,lat,lng){
+  const c1=P[c1K],c2=P[c2K];
+  let hd1=bearing_(c1[0],c1[1],c2[0],c2[1]),hd2=bearing_(c1[0],c1[1],lat,lng);
+  if(hd2<0)hd2+=180;
+  const rad=Math.abs(hd1-hd2)*D2R;
+  const hyp=hav(c1[0],c1[1],lat,lng);
+  const opp=hyp*Math.sin(rad),adj=hyp*Math.cos(rad);
+  const lowH=Math.min(h1,h2),highH=Math.max(h1,h2);
+  const edgeH=lowH+(highH-lowH)*(adj/length);
+  return edgeH+(opp-width/2)*(1/7);
+}
+// 転移表面（進入表面に接する側・三角形）: 進入表面上の対応点までの距離に1:7勾配を加算（公式の直線交点法を移植）
+function hTransTri_(P,landCK,landVK,apprCK,apprVK,rh,lat,lng){
+  const apprEdgeH=hAppr_(P,landCK,apprCK,rh,lat,lng);
+  const landC=P[landCK],landV=P[landVK],apprC=P[apprCK],apprV=P[apprVK];
+  const lcx=landC[1],lcy=landC[0],lvx=landV[1],lvy=landV[0];
+  const avx=apprV[1],avy=apprV[0];
+  const cpx=lng,cpy=lat;
+  const parSlope=(lcy-lvy)/(lcx-lvx);
+  const parIntercept=-(parSlope*cpx)+cpy;
+  const apprSlope=(avy-lvy)/(avx-lvx);
+  const apprIntercept=-(apprSlope*lvx)+lvy;
+  const crossX=(apprIntercept-parIntercept)/(parSlope-apprSlope);
+  const crossY=parSlope*crossX+parIntercept;
+  const distFromEdge=hav(crossY,crossX,lat,lng);
+  return apprEdgeH+distFromEdge*(1/7);
+}
+// 1滑走路分の進入表面・転移表面・延長進入表面・着陸帯（計11ポリゴン）を組み立て（公式quadrangleSurfaceTableと同一構成）
+function buildRunway_(P,h1,h2,length,width){
+  return [
+    {name:'着陸帯',req:true,color:'#ff0000',poly:[P.cd12,P.cd14,P.cd20,P.cd18],h:()=>0},
+    {name:'進入表面',req:true,color:'#ff5555',poly:[P.cd12,P.cd04,P.cd06,P.cd14],h:(la,ln)=>hAppr_(P,'cd13','cd05',h1,la,ln)},
+    {name:'進入表面',req:true,color:'#ff5555',poly:[P.cd18,P.cd20,P.cd28,P.cd26],h:(la,ln)=>hAppr_(P,'cd19','cd27',h2,la,ln)},
+    {name:'延長進入表面',req:true,color:'#ff7733',poly:[P.cd04,P.cd06,P.cd03,P.cd01],h:(la,ln)=>hAppr_(P,'cd13','cd02',h1,la,ln)},
+    {name:'延長進入表面',req:true,color:'#ff7733',poly:[P.cd26,P.cd28,P.cd31,P.cd29],h:(la,ln)=>hAppr_(P,'cd19','cd30',h2,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd11,P.cd12,P.cd18,P.cd17],h:(la,ln)=>hTransQuad_(P,'cd13','cd19',h1,h2,length,width,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd14,P.cd15,P.cd21,P.cd20],h:(la,ln)=>hTransQuad_(P,'cd13','cd19',h1,h2,length,width,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd07,P.cd12,P.cd11],h:(la,ln)=>hTransTri_(P,'cd13','cd12','cd05','cd04',h1,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd08,P.cd15,P.cd14],h:(la,ln)=>hTransTri_(P,'cd13','cd14','cd05','cd06',h1,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd17,P.cd18,P.cd24],h:(la,ln)=>hTransTri_(P,'cd19','cd18','cd27','cd26',h2,la,ln)},
+    {name:'転移表面',req:true,color:'#ffaa44',poly:[P.cd20,P.cd21,P.cd25],h:(la,ln)=>hTransTri_(P,'cd19','cd20','cd27','cd28',h2,la,ln)},
+  ];
+}
+
+// 各空港公式CD座標（constants.js SURFACE_POINTSより。cdXX=[lat,lng]）
+const KUMAMOTO_PTS={cd01:[32.7926705555556,130.684345583333],cd02:[32.7731357222222,130.695375111111],cd03:[32.7535998333333,130.706399805556],cd04:[32.8245488055556,130.808301222222],cd05:[32.8196624722222,130.811053277778],cd06:[32.8147760555556,130.813805055556],cd07:[32.8252712777778,130.811117083333],cd08:[32.8161641944444,130.81624575],cd11:[32.8356093611111,130.837553333333],cd12:[32.8324992222222,130.839304055556],cd13:[32.8312774722222,130.839991722222],cd14:[32.8300557222222,130.840679388889],cd15:[32.8269455277778,130.842429888889],cd17:[32.8469656944444,130.868061722222],cd18:[32.8445718888889,130.869408361111],cd19:[32.8433499722222,130.87009575],cd20:[32.8421280555556,130.870783083333],cd21:[32.8397342222222,130.872129583333],cd24:[32.8552547777778,130.888223444444],cd25:[32.8476806666667,130.892482361111],cd26:[32.8598395833333,130.89630125],cd27:[32.8549513055556,130.899049583333],cd28:[32.850063,130.901797638889],cd29:[32.8598395833333,130.89630125],cd30:[32.8549513055556,130.899049583333],cd31:[32.850063,130.901797638889]};
+const KIX_A_PTS={cd01:[34.3486416666667,135.085652777778],cd02:[34.3318472222222,135.102097222222],cd03:[34.3150527777778,135.118536111111],cd04:[34.4042055555556,135.199297222222],cd05:[34.4000055555556,135.203408333333],cd06:[34.3958027777778,135.207519444444],cd07:[34.4083694444444,135.207827777778],cd08:[34.4018333333333,135.214172222222],cd11:[34.4202888888889,135.225575],cd12:[34.4180805555556,135.227733333333],cd13:[34.4170305555556,135.228761111111],cd14:[34.4159805555556,135.229786111111],cd15:[34.4137694444444,135.231947222222],cd17:[34.4408277777778,135.256183333333],cd18:[34.4386194444444,135.258338888889],cd19:[34.4375694444444,135.259366666667],cd20:[34.4365194444444,135.260394444444],cd21:[34.4343083333333,135.262552777778],cd24:[34.4527388888889,135.273944444444],cd25:[34.4462361111111,135.280344444444],cd26:[34.4587888888889,135.280633333333],cd27:[34.4545833333333,135.284741666667],cd28:[34.4503805555556,135.28885],cd29:[34.539425,135.369922222222],cd30:[34.5225916666667,135.386347222222],cd31:[34.5057583333333,135.402769444444]};
+const KIX_B_PTS={cd01:[34.3598138888889,135.062588888889],cd02:[34.3430222222222,135.079041666667],cd03:[34.3262305555556,135.095486111111],cd04:[34.4154,135.176233333333],cd05:[34.4112,135.180344444444],cd06:[34.4069972222222,135.184452777778],cd07:[34.4195666666667,135.184763888889],cd08:[34.4130666666667,135.191147222222],cd11:[34.4314861111111,135.202508333333],cd12:[34.4292805555556,135.204666666667],cd13:[34.4282305555556,135.205694444444],cd14:[34.4271805555556,135.206722222222],cd15:[34.424975,135.208880555556],cd17:[34.4548694444444,135.237341666667],cd18:[34.4526611111111,135.2395],cd19:[34.4516111111111,135.240527777778],cd20:[34.4505611111111,135.241555555556],cd21:[34.4483555555556,135.243711111111],cd24:[34.4667833333333,135.255105555556],cd25:[34.4602583333333,135.261455555556],cd26:[34.4728333333333,135.261794444444],cd27:[34.4686305555556,135.265902777778],cd28:[34.464425,135.270013888889],cd29:[34.5534833333333,135.351077777778],cd30:[34.5366527777778,135.367511111111],cd31:[34.5198222222222,135.383938888889]};
+const CENTRAIR_PTS={cd01:[35.0112680555556,136.795393005556],cd02:[35.0070582333333,136.769600086111],cd03:[35.0028429444444,136.743809866667],cd04:[34.9020013944444,136.801605841667],cd05:[34.9009498194444,136.795165819444],cd06:[34.8998978944444,136.788725955556],cd07:[34.8951721527778,136.801993580556],cd08:[34.8934632,136.791529475],cd11:[34.87523625,136.806536241667],cd12:[34.8746843638889,136.803156275],cd13:[34.8744215166667,136.801546780556],cd14:[34.8741586583333,136.799937297222],cd15:[34.8736065805556,136.796557408333],cd17:[34.8432244833333,136.814228533333],cd18:[34.8426728055556,136.810849808333],cd19:[34.8424100722222,136.809240911111],cd20:[34.8421473111111,136.807632025],cd21:[34.8415954583333,136.8042534],cd24:[34.8233667083333,136.819247880556],cd25:[34.821659275,136.808792480556],cd26:[34.8169312,136.822046358333],cd27:[34.8158807222222,136.815612672222],cd28:[34.8148299138889,136.809179166667],cd29:[34.7139529888889,136.866762405556],cd30:[34.7097586083333,136.841058244444],cd31:[34.7055588194444,136.815356722222]};
+
+// ★ v42: 全国7空港対応（水平表面・円錐表面・外側水平表面）
+// ★ v43: 進入表面・転移表面・延長進入表面の判定計算を福岡・熊本・関西・セントレアに追加（runways設定）
 // ARP座標・標点標高は各空港公式「高さ制限回答システム」(secure.kix-ap.ne.jp配下)のmap.js/constants.jsより取得
 const AIRPORTS={
   fukuoka :{name:'福岡空港'        ,nameEn:'Fukuoka Airport'      ,arp:{lat:33.5844            ,lng:130.4517            },arpel:9.1  ,hls:'https://secure.kix-ap.ne.jp/fukuoka-airport/'                 ,phone:'092-623-0636' ,hasDetail:true},
   haneda  :{name:'羽田空港'        ,nameEn:'Haneda Airport'       ,arp:{lat:35.55325248        ,lng:139.78122849        },arpel:6.4  ,hls:'https://secure.kix-ap.ne.jp/haneda-airport/'                  ,phone:null           ,hasDetail:false},
   narita  :{name:'成田空港'        ,nameEn:'Narita Airport'       ,arp:{lat:35.7652777777778   ,lng:140.385555555556    },arpel:41.0 ,hls:'https://secure.kix-ap.ne.jp/narita-airport/Temporary/index.html',phone:null          ,hasDetail:false},
-  kansai  :{name:'関西空港'        ,nameEn:'Kansai Airport'       ,arp:{lat:34.4341666666667   ,lng:135.232777777778    },arpel:5.3  ,hls:'https://secure.kix-ap.ne.jp/kix/'                             ,phone:null           ,hasDetail:false},
+  kansai  :{name:'関西空港'        ,nameEn:'Kansai Airport'       ,arp:{lat:34.4341666666667   ,lng:135.232777777778    },arpel:5.3  ,hls:'https://secure.kix-ap.ne.jp/kix/'                             ,phone:null           ,hasDetail:true ,runways:[{pts:KIX_A_PTS,h1:1.91,h2:4.56,length:3620,width:300},{pts:KIX_B_PTS,h1:7.15,h2:9.83,length:4120,width:300}]},
   itami   :{name:'伊丹空港（大阪国際空港）',nameEn:'Itami Airport',arp:{lat:34.78435333        ,lng:135.43913805        },arpel:12   ,hls:'https://secure.kix-ap.ne.jp/itm/'                             ,phone:null           ,hasDetail:false},
-  centrair:{name:'中部国際空港（セントレア）',nameEn:'Chubu Centrair Airport',arp:{lat:34.8584158805556,lng:136.805394605556},arpel:3.79,hls:'https://secure.kix-ap.ne.jp/centrair/Temporary/index.html'  ,phone:null           ,hasDetail:false},
-  kumamoto:{name:'熊本空港'        ,nameEn:'Kumamoto Airport'     ,arp:{lat:32.8372597222222   ,lng:130.855152633333    },arpel:192.7,hls:'https://secure.kix-ap.ne.jp/kumamoto-airport/'                ,phone:null           ,hasDetail:false}
+  centrair:{name:'中部国際空港（セントレア）',nameEn:'Chubu Centrair Airport',arp:{lat:34.8584158805556,lng:136.805394605556},arpel:3.79,hls:'https://secure.kix-ap.ne.jp/centrair/Temporary/index.html'  ,phone:null           ,hasDetail:true ,runways:[{pts:CENTRAIR_PTS,h1:5,h2:5,length:3620,width:300}]},
+  kumamoto:{name:'熊本空港'        ,nameEn:'Kumamoto Airport'     ,arp:{lat:32.8372597222222   ,lng:130.855152633333    },arpel:192.7,hls:'https://secure.kix-ap.ne.jp/kumamoto-airport/'                ,phone:null           ,hasDetail:true ,runways:[{pts:KUMAMOTO_PTS,h1:183.15,h2:195.72,length:3120,width:300}]}
 };
 let currentAirportKey='fukuoka';
 let ARP=AIRPORTS.fukuoka.arp, ARPEL=AIRPORTS.fukuoka.arpel;
@@ -997,6 +1070,17 @@ function checkSurf(lat,lng){
     res.push({name:'外側水平表面',color:'#4499ff',req:true,prohibit:false,
       desc:`円錐表面外縁〜24,000m以内・制限高${SOTOSUIHEI_AMSL}m（海抜）・許可申請必要`,
       amsl:SOTOSUIHEI_AMSL,dist:Math.round(d)});}
+  // ★ v43: 進入表面・転移表面・延長進入表面・着陸帯（公式CD座標・計算式ベース）
+  //   該当する場合、水平表面等より制限高が低くなるため、最終的にreqSurfs内の最小amslとして自動的に優先される
+  const runways=AIRPORTS[currentAirportKey].runways;
+  if(runways){
+    for(const cfg of runways){
+      for(const s of buildRunway_(cfg.pts,cfg.h1,cfg.h2,cfg.length,cfg.width)){
+        if(polyContainsLL_(lat,lng,s.poly)){
+          const amsl=Math.round(s.h(lat,lng)*10)/10;
+          res.push({name:s.name,color:s.color,req:s.req,prohibit:false,
+            desc:`${s.name}（${AIRPORTS[currentAirportKey].name}公式データ・厳密計算）`,
+            amsl,dist:Math.round(d)});}}}}
   return res;}
 
 async function getElev(lat,lng){
@@ -1511,7 +1595,8 @@ function renderResult(res){
     </div></div>
     <div class="notice">
       <strong>⚠ 免責事項：</strong>全7空港共通で水平表面・円錐表面・外側水平表面の高さ制限を計算しています（航空法施行規則に基づく全国共通の勾配・半径を使用）。
-      進入表面・転移表面・小型無人機等飛行禁止法データは福岡空港のみ収載（AIP RJFF等の座標を元にした概算ポリゴン）です。他空港も含め、正確な制限高度は必ず公式「高さ制限回答システム」で確認してください。
+      進入表面・転移表面・延長進入表面は熊本・関西・セントレアの3空港で各空港公式データ（CD座標・計算式）に基づき判定に反映しています（福岡・羽田・成田・伊丹は未対応）。福岡空港の地図上の色分け表示（トグルボタン）は概算値の参考表示のみで、判定計算には使用していません。
+      小型無人機等飛行禁止法データは福岡空港周辺のみ収載です。正確な制限高度は必ず公式「高さ制限回答システム」で最終確認してください。
       本ツールの結果のみで飛行判断を行わないでください。
     </div>`;
 
