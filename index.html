@@ -1556,9 +1556,10 @@ async function startAnalysis(){
     const reqSurfs=surfs.filter(s=>!s.prohibit&&s.amsl!==null);
     const mr=reqSurfs.length>0?reqSurfs.reduce((a,b)=>a.amsl<b.amsl?a:b):null;
     const prohibit=surfs.some(s=>s.prohibit);
-    const reqC=surfs.some(s=>s.req);
-    cRes={lat:cLat,lng:cLng,addr:cAddr,elev,surfs,mr,reqC,prohibit,
-      desAlt:parseFloat(document.getElementById('iAlt').value)||100,
+    const desAlt=parseFloat(document.getElementById('iAlt').value)||100;
+    // ★ v46: 連絡要否は「制限表面のエリア内か」ではなく「希望高度が制限高度を超えるか」で判定
+    const reqC=!!(mr&&mr.agl!==null&&desAlt>mr.agl);
+    cRes={lat:cLat,lng:cLng,addr:cAddr,elev,surfs,mr,reqC,prohibit,desAlt,
       purp:document.getElementById('sPurp').value,
       aircraft: document.getElementById('iAircraftName').value.trim() || '未入力',
       pilot: document.getElementById('iPilotName').value.trim() || '未入力'};
@@ -1584,26 +1585,23 @@ function renderResult(res){
     verdictSub=pz.vSub||'小型無人機等飛行禁止法により飛行禁止';
     verdictResult=pz.vRes||'DIPS2.0への申請対象外です';}
   else if(mr){
-    if(mr.req){
+    // ★ v46修正: 制限表面の種類（水平/円錐/進入等）に関わらず、判定は「希望高度が制限高度以内か」で統一。
+    //   制限表面のエリア内にいるだけでは連絡不要（超過した場合のみ空港設置管理者への連絡が必要）。
+    if(!elevOK||dipsAGL===null){
+      verdictClass='verdict-warn';verdictIcon='🔶';
+      verdictTitle='要確認（地点標高の取得に失敗）';
+      verdictSub=`${mr.name}内です。地点標高が取得できず超過判定ができません`;
+      verdictResult=`⚠ 地点標高の取得に失敗\n公式システムで制限高度と標高を確認してください\n制限高度（海抜）: ${mr.amsl}m`;}
+    else if(desAlt>dipsAGL){
       verdictClass='verdict-ng';verdictIcon='⚠';
-      verdictTitle='申請前に空港設置管理者への連絡必須';
-      verdictSub=`${mr.name}エリアは空港設置管理者の調整が必要\n事前連絡なしでは申請を受け付けてもらえません`;
-      if(elevOK&&dipsAGL!==null){
-        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n⚠ ただし事前連絡・調整が必要\n\n${contactBlock()}\n\n★ 公式高さ制限システムで必ず再確認してください`;}
-      else{verdictResult=`⚠ 地点標高の取得に失敗\n公式システムで制限高度と標高を確認してください\n制限高度（海抜）: ${mr.amsl}m`;}}
+      verdictTitle='空港事務所への連絡が必要です';
+      verdictSub=`${mr.name}内です。希望高度が制限高度を超えています\n飛行前に必ず空港設置管理者へ連絡してください`;
+      verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n希望高度 ${desAlt}m → 制限超過\n\n${contactBlock()}\n\n★ 公式高さ制限システムで必ず再確認してください`;}
     else{
-      if(elevOK&&dipsAGL!==null&&desAlt>dipsAGL){
-        verdictClass='verdict-ng';verdictIcon='⚠';
-        verdictTitle='空港事務所への連絡が必要です';
-        verdictSub='水平表面内です。希望高度が制限高度を超えています\n飛行前に必ず空港設置管理者へ連絡してください';
-        verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n希望高度 ${desAlt}m → 制限超過\n\n${contactBlock()}\n\n★ 公式高さ制限システムで必ず再確認してください`;}
-      else{
-        verdictClass='verdict-warn';verdictIcon='🔶';
-        verdictTitle='飛行申請可（高度制限あり）';
-        verdictSub='水平表面内です。事前連絡不要ですが高度制限があります\n制限を超える場合は必ず空港事務所へ連絡してください';
-        if(elevOK&&dipsAGL!==null){
-          verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n✅ DIPS2.0 入力高度: ${dipsAGL}m`;}
-        else{verdictResult=`⚠ 地点標高の取得に失敗\n国土地理院サイトで標高を確認し\n制限高度（海抜）${mr.amsl}mとの差を計算してください`;}}}
+      verdictClass='verdict-warn';verdictIcon='🔶';
+      verdictTitle='飛行申請可（高度制限あり）';
+      verdictSub=`${mr.name}内です。制限高度以内のため事前連絡は不要です\n制限を超える場合は必ず空港事務所へ連絡してください`;
+      verdictResult=`制限高度（海抜）${mr.amsl}m − 地点標高${elev}m = 最大 ${dipsAGL}m\n✅ DIPS2.0 入力高度: ${dipsAGL}m`;}
   }
   else if(surfs.length===0){
     verdictClass='verdict-ok';verdictIcon='✅';
@@ -1620,9 +1618,11 @@ function renderResult(res){
 
   let surfHTML='';
   surfs.forEach(s=>{
+    // ★ v46: このチップも「エリア内か」ではなく「希望高度がこの表面の制限高度を超えるか」で表示
+    const sExceeds=(s.agl!==null&&desAlt>s.agl);
     surfHTML+=`<div class="surf-detail">
       <div class="surf-detail-name" style="color:${s.color}">
-        ${s.name}<span class="chip ${s.prohibit?'cdng':s.req?'cdng':'cok'}">${s.prohibit?'🚫 飛行禁止':s.req?'⚠ 要連絡':'✓ 連絡不要'}</span>
+        ${s.name}<span class="chip ${s.prohibit?'cdng':sExceeds?'cdng':'cok'}">${s.prohibit?'🚫 飛行禁止':sExceeds?'⚠ 要連絡':'✓ 連絡不要'}</span>
       </div>
       <div style="font-size:11px;color:#4a7090;margin-bottom:8px">${s.desc}</div>
       ${s.amsl!==null?`<div class="surf-detail-grid">
