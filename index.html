@@ -1396,6 +1396,7 @@ function initMap(){
   setTimeout(()=>mapObj.invalidateSize(),300);}
 
 function setPin(lat,lng){
+  maybeAutoSwitchAirport_(lat,lng);
   cLat=lat;cLng=lng;
   document.getElementById('dLat').textContent=lat.toFixed(6);
   document.getElementById('dLng').textContent=lng.toFixed(6);
@@ -1462,24 +1463,30 @@ function setAddrDisp(addr){
   if(ai&&ai.value==='')ai.value=addr;}
 
 // ★ v42: 空港切替（水平表面・円錐表面・外側水平表面のARP/標高/公式URLを切替。地点・解析結果はリセット）
-function switchAirport(key){
+// ★ v47: opts.preservePin=trueで、地図タップ等で既に設置済みのピン・入力値を消さずに空港だけ切り替え可能に
+//   （地図タップ・住所選択時の自動空港検出=maybeAutoSwitchAirport_から使用）
+function switchAirport(key,opts){
+  opts=opts||{};
   const ap=AIRPORTS[key];
   if(!ap)return;
   currentAirportKey=key;
   ARP=ap.arp;ARPEL=ap.arpel;HLS_URL=ap.hls;
+  const sel=document.getElementById('airportSel');if(sel)sel.value=key;
 
-  // 解析結果・地点をリセット（空港が変われば制限表面も変わるため）
-  cRes=null;cLat=null;cLng=null;cAddr='';
-  document.getElementById('panelResult').innerHTML='';
-  document.getElementById('dLat').textContent='—';document.getElementById('dLat').classList.remove('set');
-  document.getElementById('dLng').textContent='—';document.getElementById('dLng').classList.remove('set');
-  document.getElementById('dAddr').textContent='住所を入力または地図をタップ';document.getElementById('dAddr').classList.remove('set');
-  const ai=document.getElementById('addrIn');if(ai)ai.value='';
-  const sg=document.getElementById('sg');if(sg)sg.style.display='none';
+  if(!opts.preservePin){
+    // 解析結果・地点をリセット（空港が変われば制限表面も変わるため）
+    cRes=null;cLat=null;cLng=null;cAddr='';
+    document.getElementById('panelResult').innerHTML='';
+    document.getElementById('dLat').textContent='—';document.getElementById('dLat').classList.remove('set');
+    document.getElementById('dLng').textContent='—';document.getElementById('dLng').classList.remove('set');
+    document.getElementById('dAddr').textContent='住所を入力または地図をタップ';document.getElementById('dAddr').classList.remove('set');
+    const ai=document.getElementById('addrIn');if(ai)ai.value='';
+    const sg=document.getElementById('sg');if(sg)sg.style.display='none';
+    if(mapInited&&mapPin){mapObj.removeLayer(mapPin);mapPin=null;}
+  }
 
   if(mapInited){
-    if(mapPin){mapObj.removeLayer(mapPin);mapPin=null;}
-    mapObj.setView([ap.arp.lat,ap.arp.lng],13);
+    if(!opts.preservePin)mapObj.setView([ap.arp.lat,ap.arp.lng],13);
     if(arpMarker){arpMarker.setLatLng([ap.arp.lat,ap.arp.lng]);arpMarker.setTooltipContent(ap.name+'(ARP)');}
     if(waterCircle)waterCircle.setLatLng([ap.arp.lat,ap.arp.lng]);
     if(conicalCircle)conicalCircle.setLatLng([ap.arp.lat,ap.arp.lng]);
@@ -1498,7 +1505,24 @@ function switchAirport(key){
       if(covered){nfzLayerGroup.addTo(mapObj);}else{mapObj.removeLayer(nfzLayerGroup);}
     }
   }
-  toast(`${ap.name}に切り替えました`);
+  if(!opts.silent)toast(`${ap.name}に切り替えました`);
+}
+
+// ★ v47: タップ・住所選択した地点に最も近いARPの空港を自動検出し、現在の選択と異なれば自動切替
+function nearestAirport_(lat,lng){
+  let best=null,bestD=Infinity;
+  for(const k in AIRPORTS){
+    const d=hav(lat,lng,AIRPORTS[k].arp.lat,AIRPORTS[k].arp.lng);
+    if(d<bestD){bestD=d;best=k;}
+  }
+  return best;
+}
+function maybeAutoSwitchAirport_(lat,lng){
+  const nearest=nearestAirport_(lat,lng);
+  if(nearest&&nearest!==currentAirportKey){
+    switchAirport(nearest,{preservePin:true,silent:true});
+    toast(`📍 ${AIRPORTS[nearest].name}エリアを検出したため空港を自動切替しました`);
+  }
 }
 
 const addrEl=document.getElementById('addrIn'),sgEl=document.getElementById('sg');
@@ -1514,6 +1538,7 @@ addrEl.addEventListener('input',()=>{
       it.addEventListener('click',()=>{
         addrEl.value=r.properties.title;
         const[lng,lat]=r.geometry.coordinates;
+        maybeAutoSwitchAirport_(lat,lng);
         cLat=lat;cLng=lng;cAddr=r.properties.title;
         document.getElementById('dLat').textContent=lat.toFixed(6);
         document.getElementById('dLng').textContent=lng.toFixed(6);
@@ -1537,6 +1562,7 @@ async function startAnalysis(){
     const rs=await geocode(v);
     if(!rs||!rs.length){btn.disabled=false;btn.innerHTML='▶ 制限高度を自動解析';toast('住所が見つかりませんでした');return;}
     const[lng,lat]=rs[0].geometry.coordinates;
+    maybeAutoSwitchAirport_(lat,lng);
     cLat=lat;cLng=lng;
     addrEl.value=rs[0].properties.title;
     document.getElementById('dLat').textContent=lat.toFixed(6);
