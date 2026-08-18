@@ -1527,6 +1527,12 @@ function maybeAutoSwitchAirport_(lat,lng){
 
 const addrEl=document.getElementById('addrIn'),sgEl=document.getElementById('sg');
 addrEl.addEventListener('input',()=>{
+  // ★ v48: 前回選択した地点の座標が残ったまま解析されるのを防ぐため、
+  //   ユーザーが住所欄を編集した時点で座標を無効化（次の解析で必ず再ジオコーディングさせる）
+  cLat=null;cLng=null;cAddr='';
+  document.getElementById('dLat').textContent='—';document.getElementById('dLat').classList.remove('set');
+  document.getElementById('dLng').textContent='—';document.getElementById('dLng').classList.remove('set');
+  document.getElementById('dAddr').textContent='住所を入力または地図をタップ';document.getElementById('dAddr').classList.remove('set');
   clearTimeout(gcTmr);const v=addrEl.value.trim();
   if(v.length<4){sgEl.style.display='none';return;}
   gcTmr=setTimeout(async()=>{
