@@ -57,6 +57,8 @@ tr:hover td { background: #f8fafc; }
 	<div class="filters">
 		<input type="search" id="q" placeholder="ファイル名・フォルダ名で検索（スペース区切りでAND）">
 		<select id="fPc"><option value="">全PC</option></select>
+		<select id="fYear"><option value="">全年度</option></select>
+		<select id="fCat"><option value="">全分類</option></select>
 		<select id="fExt"><option value="">全種類</option></select>
 		<select id="fPeriod">
 			<option value="">全期間</option>
@@ -72,6 +74,8 @@ tr:hover td { background: #f8fafc; }
 		<table>
 			<thead><tr>
 				<th data-k="PC">PC</th>
+				<th data-k="Year">年度</th>
+				<th data-k="Category">分類</th>
 				<th data-k="Name">ファイル名</th>
 				<th data-k="Extension">種類</th>
 				<th data-k="Modified">更新日時 ▼</th>
@@ -128,7 +132,7 @@ async function loadFiles(list) {
 		const pc = recs[0].PC;
 		files = files.filter(r => r.PC !== pc);
 		const real = recs.filter(r => r.Name);
-		real.forEach(r => { r._mod = toDate(r.Modified); r._size = parseFloat(r.SizeKB) || 0; r._search = (r.Name + ' ' + r.FullPath).toLowerCase(); });
+		real.forEach(r => { r._mod = toDate(r.Modified); r._size = parseFloat(r.SizeKB) || 0; r.Year = r.Year || ''; r.Category = r.Category || ''; r._search = (r.Name + ' ' + r.FullPath).toLowerCase(); });
 		files.push(...real);
 		pcStatus[pc] = { collectedAt: toDate(recs[0].CollectedAt), user: recs[0].User, count: real.length };
 	}
@@ -154,6 +158,8 @@ function refreshOptions() {
 		sel.value = values.includes(cur) ? cur : '';
 	};
 	fill($('fPc'), Object.keys(pcStatus).sort(), '全PC');
+	fill($('fYear'), [...new Set(files.map(r => r.Year).filter(Boolean))].sort().reverse(), '全年度');
+	fill($('fCat'), [...new Set(files.map(r => r.Category).filter(Boolean))].sort(), '全分類');
 	fill($('fExt'), [...new Set(files.map(r => r.Extension))].sort(), '全種類');
 }
 
@@ -176,9 +182,10 @@ function periodTest() {
 
 function filtered() {
 	const words = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
-	const pc = $('fPc').value, ext = $('fExt').value, inPeriod = periodTest();
+	const pc = $('fPc').value, ext = $('fExt').value, year = $('fYear').value, cat = $('fCat').value, inPeriod = periodTest();
 	return files.filter(r =>
-		(!pc || r.PC === pc) && (!ext || r.Extension === ext) && inPeriod(r._mod) &&
+		(!pc || r.PC === pc) && (!ext || r.Extension === ext) && (!year || r.Year === year) &&
+		(!cat || r.Category === cat) && inPeriod(r._mod) &&
 		words.every(w => r._search.includes(w)));
 }
 
@@ -211,6 +218,8 @@ function render() {
 	const shown = rows.slice(0, MAX_ROWS);
 	$('tbody').innerHTML = shown.map(r => `<tr>
 		<td>${esc(r.PC)}</td>
+		<td>${esc(r.Year ? r.Year + '年度' : '')}</td>
+		<td>${esc(r.Category || '')}</td>
 		<td>${esc(r.Name)}</td>
 		<td>${esc(r.Extension)}</td>
 		<td>${fmt(r._mod)}</td>
@@ -227,7 +236,7 @@ function render() {
 
 $('pickDir').onchange = e => loadFiles(e.target.files);
 $('pickFiles').onchange = e => loadFiles(e.target.files);
-['q', 'fPc', 'fExt', 'fDate'].forEach(id => $(id).addEventListener('input', render));
+['q', 'fPc', 'fYear', 'fCat', 'fExt', 'fDate'].forEach(id => $(id).addEventListener('input', render));
 $('fPeriod').addEventListener('input', () => {
 	$('fDate').hidden = $('fPeriod').value !== 'day';
 	if (!$('fDate').value) $('fDate').valueAsDate = new Date();

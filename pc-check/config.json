@@ -1,10 +1,9 @@
 {
   "targets": [
-    "C:\\Users\\Public\\Documents",
-    "%USERPROFILE%\\Documents",
-    "%USERPROFILE%\\Desktop"
+    "D:\\成果物"
   ],
-  "extensions": [".pdf", ".xlsx", ".xls", ".docx", ".doc", ".csv", ".jpg", ".png", ".kml"],
-  "excludeNames": ["~$*", "*.tmp", "desktop.ini", "Thumbs.db"],
-  "outputDir": "\\\\PC-01\\pc-check-share"
+  "fromYear": 2006,
+  "extensions": [],
+  "excludeNames": ["~$*", "*.tmp", "*.bak", "desktop.ini", "Thumbs.db", ".DS_Store"],
+  "outputDir": "C:\\pc-check-share"
 }
