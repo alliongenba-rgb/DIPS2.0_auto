@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC成果物チェック</title>
+<style>
+:root {
+	--bg: #f6f7f9; --panel: #fff; --text: #1d2330; --muted: #667085; --line: #e3e6eb;
+	--accent: #2563eb; --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --ng: #b91c1c; --ng-bg: #fee2e2;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Yu Gothic UI", "Meiryo", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+header { padding: 16px 20px; background: var(--panel); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+header h1 { font-size: 18px; margin: 0 12px 0 0; }
+main { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+.btn { display: inline-block; padding: 8px 14px; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; border: 0; font: inherit; }
+.btn.sub { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+input[type=file] { display: none; }
+.hint { color: var(--muted); font-size: 13px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 99px; font-weight: normal; }
+.badge.ok { background: var(--ok-bg); color: var(--ok); }
+.badge.warn { background: var(--warn-bg); color: var(--warn); }
+.badge.ng { background: var(--ng-bg); color: var(--ng); }
+.card .num { font-size: 22px; font-weight: bold; }
+.card .meta { color: var(--muted); font-size: 12px; }
+.filters { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.filters input[type=search] { flex: 1 1 260px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.filters select, .filters input[type=date] { padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+.count { color: var(--muted); margin-left: auto; }
+.tablewrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+th { background: #f0f2f5; position: sticky; top: 0; cursor: pointer; user-select: none; font-weight: 600; }
+td.path { white-space: normal; word-break: break-all; color: var(--muted); font-size: 12px; min-width: 260px; }
+td.num { text-align: right; }
+tr:hover td { background: #f8fafc; }
+.copy { cursor: pointer; color: var(--accent); font-size: 12px; margin-left: 6px; }
+.empty { padding: 40px; text-align: center; color: var(--muted); }
+#drop { border: 2px dashed var(--line); border-radius: 8px; padding: 30px; text-align: center; color: var(--muted); margin-bottom: 16px; }
+#drop.over { border-color: var(--accent); background: #eff6ff; }
+</style>
+</head>
+<body>
+<header>
+	<h1>PC成果物チェック</h1>
+	<label class="btn">共有フォルダを選ぶ<input id="pickDir" type="file" webkitdirectory multiple></label>
+	<label class="btn sub">CSVを選ぶ<input id="pickFiles" type="file" accept=".csv" multiple></label>
+	<span class="hint" id="loaded">未読み込み</span>
+</header>
+<main>
+	<div id="drop">共有フォルダの CSV（PC名.csv）をここにドラッグ＆ドロップ、または上のボタンで選択</div>
+	<div class="cards" id="cards"></div>
+	<div class="filters">
+		<input type="search" id="q" placeholder="ファイル名・フォルダ名で検索（スペース区切りでAND）">
+		<select id="fPc"><option value="">全PC</option></select>
+		<select id="fExt"><option value="">全種類</option></select>
+		<select id="fPeriod">
+			<option value="">全期間</option>
+			<option value="day">指定日に更新</option>
+			<option value="today">今日更新</option>
+			<option value="7">7日以内に更新</option>
+			<option value="30">30日以内に更新</option>
+		</select>
+		<input type="date" id="fDate" hidden>
+		<span class="count" id="count"></span>
+	</div>
+	<div class="tablewrap">
+		<table>
+			<thead><tr>
+				<th data-k="PC">PC</th>
+				<th data-k="Name">ファイル名</th>
+				<th data-k="Extension">種類</th>
+				<th data-k="Modified">更新日時 ▼</th>
+				<th data-k="SizeKB">サイズ(KB)</th>
+				<th data-k="FullPath">場所</th>
+			</tr></thead>
+			<tbody id="tbody"></tbody>
+		</table>
+		<div class="empty" id="empty">CSV を読み込むと、3台分のファイルをまとめて検索できます</div>
+	</div>
+</main>
+<script>
+// 収集が止まっていると判断するまでの時間（collect.ps1 は30分ごと実行）
+const STALE_WARN_MIN = 90;
+const STALE_NG_MIN = 24 * 60;
+const MAX_ROWS = 2000;
+
+let files = [];       // 全PCのファイル行
+let pcStatus = {};    // PC名 -> { collectedAt, user, count }
+let sortKey = 'Modified', sortDir = -1;
+
+const $ = id => document.getElementById(id);
+
+function parseCsv(text) {
+	text = text.replace(/^﻿/, '');
+	const rows = [];
+	let row = [], field = '', i = 0, q = false;
+	while (i < text.length) {
+		const c = text[i];
+		if (q) {
+			if (c === '"') {
+				if (text[i + 1] === '"') { field += '"'; i++; } else q = false;
+			} else field += c;
+		} else if (c === '"') q = true;
+		else if (c === ',') { row.push(field); field = ''; }
+		else if (c === '\n' || c === '\r') {
+			if (c === '\r' && text[i + 1] === '\n') i++;
+			row.push(field); rows.push(row); row = []; field = '';
+		} else field += c;
+		i++;
+	}
+	if (field !== '' || row.length) { row.push(field); rows.push(row); }
+	const header = rows.shift() || [];
+	return rows.filter(r => r.length > 1).map(r => Object.fromEntries(header.map((h, j) => [h, r[j] ?? ''])));
+}
+
+async function loadFiles(list) {
+	const csvs = [...list].filter(f => /\.csv$/i.test(f.name));
+	if (!csvs.length) { alert('CSV ファイルが見つかりませんでした'); return; }
+	// 同じPCのCSVを読み直した場合は置き換える
+	for (const f of csvs) {
+		const recs = parseCsv(await f.text());
+		if (!recs.length) continue;
+		const pc = recs[0].PC;
+		files = files.filter(r => r.PC !== pc);
+		const real = recs.filter(r => r.Name);
+		real.forEach(r => { r._mod = toDate(r.Modified); r._size = parseFloat(r.SizeKB) || 0; r._search = (r.Name + ' ' + r.FullPath).toLowerCase(); });
+		files.push(...real);
+		pcStatus[pc] = { collectedAt: toDate(recs[0].CollectedAt), user: recs[0].User, count: real.length };
+	}
+	$('loaded').textContent = `${Object.keys(pcStatus).length}台分 / ${files.length.toLocaleString()}件 読み込み済み（${new Date().toLocaleTimeString()}）`;
+	$('drop').hidden = true;
+	refreshOptions();
+	render();
+}
+
+function toDate(s) { return s ? new Date(s.replace(' ', 'T')) : null; }
+function fmt(d) {
+	if (!d || isNaN(d)) return '';
+	const p = n => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function sameDay(a, b) { return a && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function refreshOptions() {
+	const fill = (sel, values, label) => {
+		const cur = sel.value;
+		sel.innerHTML = `<option value="">${label}</option>` + values.map(v => `<option>${esc(v)}</option>`).join('');
+		sel.value = values.includes(cur) ? cur : '';
+	};
+	fill($('fPc'), Object.keys(pcStatus).sort(), '全PC');
+	fill($('fExt'), [...new Set(files.map(r => r.Extension))].sort(), '全種類');
+}
+
+function periodTest() {
+	const p = $('fPeriod').value;
+	const now = new Date();
+	if (p === 'today') return d => sameDay(d, now);
+	if (p === 'day') {
+		const v = $('fDate').value;
+		if (!v) return () => true;
+		const day = new Date(v + 'T00:00');
+		return d => sameDay(d, day);
+	}
+	if (p) {
+		const from = new Date(now - Number(p) * 86400000);
+		return d => d && d >= from;
+	}
+	return () => true;
+}
+
+function filtered() {
+	const words = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+	const pc = $('fPc').value, ext = $('fExt').value, inPeriod = periodTest();
+	return files.filter(r =>
+		(!pc || r.PC === pc) && (!ext || r.Extension === ext) && inPeriod(r._mod) &&
+		words.every(w => r._search.includes(w)));
+}
+
+function renderCards(rows) {
+	const now = new Date();
+	const periodOn = $('fPeriod').value !== '';
+	$('cards').innerHTML = Object.keys(pcStatus).sort().map(pc => {
+		const s = pcStatus[pc];
+		const age = s.collectedAt ? (now - s.collectedAt) / 60000 : Infinity;
+		const [cls, label] = age > STALE_NG_MIN ? ['ng', '収集停止'] : age > STALE_WARN_MIN ? ['warn', '収集遅れ'] : ['ok', '最新'];
+		const hit = rows.filter(r => r.PC === pc).length;
+		// 期間で絞っているのに0件 = その日の成果物がない、を一目で分かるようにする
+		const hitBadge = periodOn ? (hit ? `<span class="badge ok">該当 ${hit}件</span>` : `<span class="badge ng">該当なし</span>`) : '';
+		return `<div class="card">
+			<h3>${esc(pc)} <span class="badge ${cls}">${label}</span></h3>
+			<div class="num">${hit.toLocaleString()} <span class="meta">/ ${s.count.toLocaleString()}件</span> ${hitBadge}</div>
+			<div class="meta">収集: ${fmt(s.collectedAt)}　ユーザー: ${esc(s.user)}</div>
+		</div>`;
+	}).join('');
+}
+
+function render() {
+	const rows = filtered();
+	renderCards(rows);
+	rows.sort((a, b) => {
+		const k = sortKey === 'Modified' ? '_mod' : sortKey === 'SizeKB' ? '_size' : sortKey;
+		const x = a[k], y = b[k];
+		return (x > y ? 1 : x < y ? -1 : 0) * sortDir;
+	});
+	const shown = rows.slice(0, MAX_ROWS);
+	$('tbody').innerHTML = shown.map(r => `<tr>
+		<td>${esc(r.PC)}</td>
+		<td>${esc(r.Name)}</td>
+		<td>${esc(r.Extension)}</td>
+		<td>${fmt(r._mod)}</td>
+		<td class="num">${r._size.toLocaleString()}</td>
+		<td class="path">${esc(r.FullPath)}<span class="copy" data-p="${esc(r.FullPath)}">コピー</span></td>
+	</tr>`).join('');
+	$('empty').hidden = files.length > 0 && rows.length > 0;
+	if (files.length && !rows.length) $('empty').textContent = '条件に合うファイルはありません';
+	$('count').textContent = files.length ? `${rows.length.toLocaleString()}件` + (rows.length > MAX_ROWS ? `（先頭${MAX_ROWS}件を表示）` : '') : '';
+	document.querySelectorAll('th').forEach(th => {
+		th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (th.dataset.k === sortKey ? (sortDir > 0 ? ' ▲' : ' ▼') : '');
+	});
+}
+
+$('pickDir').onchange = e => loadFiles(e.target.files);
+$('pickFiles').onchange = e => loadFiles(e.target.files);
+['q', 'fPc', 'fExt', 'fDate'].forEach(id => $(id).addEventListener('input', render));
+$('fPeriod').addEventListener('input', () => {
+	$('fDate').hidden = $('fPeriod').value !== 'day';
+	if (!$('fDate').value) $('fDate').valueAsDate = new Date();
+	render();
+});
+document.querySelector('thead').onclick = e => {
+	const k = e.target.dataset.k;
+	if (!k) return;
+	sortDir = k === sortKey ? -sortDir : (k === 'Modified' || k === 'SizeKB' ? -1 : 1);
+	sortKey = k;
+	render();
+};
+$('tbody').onclick = e => {
+	if (!e.target.dataset.p) return;
+	navigator.clipboard.writeText(e.target.dataset.p);
+	e.target.textContent = 'コピー済';
+	setTimeout(() => e.target.textContent = 'コピー', 1200);
+};
+const drop = $('drop');
+document.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+document.addEventListener('dragleave', () => drop.classList.remove('over'));
+document.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); loadFiles(e.dataTransfer.files); });
+render();
+</script>
+</body>
+</html>
