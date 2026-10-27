@@ -1,9 +1,10 @@
 {
   "targets": [
-    "D:\\成果物"
+    "N:\\"
   ],
-  "fromYear": 2006,
+  "fromYear": 2026,
   "extensions": [],
   "excludeNames": ["~$*", "*.tmp", "*.bak", "desktop.ini", "Thumbs.db", ".DS_Store"],
+  "excludeDirs": ["*.files"],
   "outputDir": "C:\\pc-check-share"
 }
