@@ -1,10 +1,10 @@
 {
-  "targets": [
-    "N:\\01_社内共有\\01_案件データ"
-  ],
+  "target": "N:\\01_社内共有\\01_案件データ",
+  "displayRoot": "N:\\01_社内共有\\01_案件データ",
   "fromYear": 2026,
-  "extensions": [],
   "excludeNames": ["~$*", "*.tmp", "*.bak", "desktop.ini", "Thumbs.db", ".DS_Store"],
   "excludeDirs": ["*.files"],
-  "outputDir": "C:\\pc-check-share"
+  "logDataSourceId": "a8600581-6f48-4b75-b1ec-9cafa9713dac",
+  "checkDataSourceId": "233e9b89-0f24-40f8-a494-6fb9739a63e3",
+  "logDays": 14
 }
