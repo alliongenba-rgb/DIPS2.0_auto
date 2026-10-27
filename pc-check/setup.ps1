@@ -1,12 +1,12 @@
 ﻿﻿# PC成果物チェックの初期設定（各PCで1回だけ実行する）。
 # 「setup.bat」をダブルクリックすると、このスクリプトが動く。
 #  1. 一式を C:\pc-check にコピー
-#  2. 成果物の場所（N:\案件フォルダ\2026年度\...）を確認
+#  2. 成果物の場所（N:\社内共有\01_案件データ\2026年度\...）を確認
 #  3. config.json を作成し、自動実行を登録し、1回目の収集を行う
 $ErrorActionPreference = 'Stop'
 
 $installDir = 'C:\pc-check'
-$defaultTarget = 'N:\'
+$defaultTarget = 'N:\社内共有\01_案件データ'
 $defaultOutputDir = 'C:\pc-check-share'
 $fromYear = 2026
 $yearPattern = '^\s*(\d{4})\s*年度'
@@ -44,25 +44,30 @@ Get-ChildItem -LiteralPath $installDir -File | Unblock-File
 Write-Host '  完了'
 
 # --- 2. 成果物の場所を確認 ---
-Write-Step 2 "成果物の場所を確認します（案件フォルダ\${fromYear}年度\各フォルダ）"
+Write-Step 2 "成果物の場所を確認します（${fromYear}年度フォルダが入っているフォルダ）"
 $target = $null
 while (-not $target) {
-    $ans = Read-Host "  案件フォルダが並んでいる場所（そのままEnterで $defaultTarget）"
+    $ans = Read-Host "  ${fromYear}年度フォルダが入っているフォルダ（そのままEnterで $defaultTarget）"
     if (-not $ans) { $ans = $defaultTarget }
     $ans = $ans.Trim('"')
     if (-not (Test-Path -LiteralPath $ans)) {
         Write-Host "  $ans が見つかりません。ドライブがつながっているか確認してください。" -ForegroundColor Yellow
         continue
     }
-    # 「案件フォルダ\2026年度」がある案件を数えて表示し、場所が合っているか確認してもらう
-    $projects = @(Get-ChildItem -LiteralPath $ans -Directory -ErrorAction SilentlyContinue | Where-Object {
-        @(Get-ChildItem -LiteralPath $_.FullName -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match $yearPattern -and [int]$Matches[1] -ge $fromYear }).Count -gt 0
-    })
-    Write-Host ''
-    Write-Host "  ${fromYear}年度以降のフォルダがある案件: $($projects.Count) 件"
-    $projects | Select-Object -First 10 | ForEach-Object { Write-Host "    $($_.Name)" }
-    if ($projects.Count -gt 10) { Write-Host "    ...ほか $($projects.Count - 10) 件" }
+    # 年度フォルダと、その直下のフォルダを表示して、場所が合っているか確認してもらう
+    $years = @(Get-ChildItem -LiteralPath $ans -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match $yearPattern -and [int]$Matches[1] -ge $fromYear })
+    if ($years.Count -eq 0) {
+        Write-Host "  $ans の中に ${fromYear}年度 のフォルダが見つかりません。" -ForegroundColor Yellow
+        continue
+    }
+    foreach ($y in $years) {
+        $subs = @(Get-ChildItem -LiteralPath $y.FullName -Directory -ErrorAction SilentlyContinue)
+        Write-Host ''
+        Write-Host "  $($y.Name) の直下のフォルダ: $($subs.Count) 件"
+        $subs | Select-Object -First 10 | ForEach-Object { Write-Host "    $($_.Name)" }
+        if ($subs.Count -gt 10) { Write-Host "    ...ほか $($subs.Count - 10) 件" }
+    }
     Write-Host ''
     $ok = Read-Host '  この場所でよければ Enter、やり直す場合は n を入力'
     if ($ok -ne 'n') { $target = ConvertTo-UncPath $ans }

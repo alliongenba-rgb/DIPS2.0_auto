@@ -1,6 +1,6 @@
 ﻿# 各PCの成果物ファイル一覧を収集し、出力先フォルダに「PC名.csv」として書き出す。
-# 成果物は「対象フォルダ\案件フォルダ\2026年度\各フォルダ\...」の形で整理されている前提で、
-# fromYear 以降の年度フォルダの中だけを対象にし、案件・年度・分類（年度直下のフォルダ名）も列に出す。
+# 成果物は「N:\社内共有\01_案件データ\2026年度\直下の各フォルダ\...」の形で格納されている前提で、
+# fromYear 以降の年度フォルダの中だけを対象にし、年度と「年度直下のフォルダ名」も列に出す。
 # Windows PowerShell 5.1（Windows 10 / 11 標準）で動作。
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot 'config.json')
@@ -19,7 +19,7 @@ $excludeDirs = @(@($config.excludeDirs) | Where-Object { $_ })
 $fromYear = if ($config.fromYear) { [int]$config.fromYear } else { 0 }
 $outputDir = [Environment]::ExpandEnvironmentVariables($config.outputDir)
 $yearPattern = '^\s*(\d{4})\s*年度'
-# 年度フォルダを探しにいく深さ（対象フォルダ\案件\2026年度 なら 1 で足りる。余裕を見て 3）
+# 年度フォルダを探しにいく深さ（対象フォルダの直下に年度フォルダがあれば 0 で足りる。余裕を見て 3）
 $searchDepth = 3
 
 $rows = New-Object System.Collections.Generic.List[object]
@@ -31,12 +31,11 @@ function Add-File($f, $root) {
     }
     $relative = $f.FullName.Substring($root.Length).TrimStart('\')
     $parts = $relative.Split('\')
-    # パスの中で最初に出てくる「NNNN年度」フォルダを年度とし、その1つ上を案件、直下を分類とする
-    $year = ''; $category = ''; $project = ''
+    # パスの中で最初に出てくる「NNNN年度」フォルダを年度とし、その直下のフォルダを Category とする
+    $year = ''; $category = ''
     for ($i = 0; $i -lt $parts.Length - 1; $i++) {
         if ($parts[$i] -match $yearPattern) {
             $year = $Matches[1]
-            $project = if ($i -gt 0) { $parts[$i - 1] } else { Split-Path -Leaf $root }
             if ($i + 1 -lt $parts.Length - 1) { $category = $parts[$i + 1] }
             break
         }
@@ -52,7 +51,6 @@ function Add-File($f, $root) {
         Modified     = $f.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
         Created      = $f.CreationTime.ToString('yyyy-MM-dd HH:mm:ss')
         FullPath     = $f.FullName
-        Project      = $project
         Year         = $year
         Category     = $category
         CollectedAt  = $collectedAt
@@ -99,12 +97,12 @@ if (-not (Test-Path -LiteralPath $outputDir)) {
 # 書き出し途中のファイルをビューアが読まないよう、一時ファイルに書いてから置き換える
 $outFile = Join-Path $outputDir "$pc.csv"
 $tmpFile = "$outFile.tmp"
-$header = 'PC,User,Root,RelativePath,Name,Extension,SizeKB,Modified,Created,FullPath,Project,Year,Category,CollectedAt'
+$header = 'PC,User,Root,RelativePath,Name,Extension,SizeKB,Modified,Created,FullPath,Year,Category,CollectedAt'
 if ($rows.Count -gt 0) {
     $rows | Export-Csv -Path $tmpFile -NoTypeInformation -Encoding UTF8
 } else {
     # 該当ファイル0件でも「収集は動いている」ことが分かるよう、ヘッダーと収集時刻だけの行を残す
-    $lines = @($header, "`"$pc`",`"$user`",,,,,,,,,,,,`"$collectedAt`"")
+    $lines = @($header, "`"$pc`",`"$user`",,,,,,,,,,,`"$collectedAt`"")
     Set-Content -Path $tmpFile -Value $lines -Encoding UTF8
 }
 Move-Item -LiteralPath $tmpFile -Destination $outFile -Force
