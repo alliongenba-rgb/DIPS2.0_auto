@@ -1,6 +1,6 @@
 ﻿# 各PCの成果物ファイル一覧を収集し、出力先フォルダに「PC名.csv」として書き出す。
-# 成果物は「N:\社内共有\01_案件データ\2026年度\直下の各フォルダ\...」の形で格納されている前提で、
-# fromYear 以降の年度フォルダの中だけを対象にし、年度と「年度直下のフォルダ名」も列に出す。
+# 成果物は「N:\01_社内共有\01_案件データ\2026年度\ドローン 等\案件フォルダ\...」の形で格納されている前提で、
+# fromYear 以降の年度フォルダの中だけを対象にし、年度・年度直下のフォルダ・案件フォルダも列に出す。
 # Windows PowerShell 5.1（Windows 10 / 11 標準）で動作。
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot 'config.json')
@@ -31,12 +31,13 @@ function Add-File($f, $root) {
     }
     $relative = $f.FullName.Substring($root.Length).TrimStart('\')
     $parts = $relative.Split('\')
-    # パスの中で最初に出てくる「NNNN年度」フォルダを年度とし、その直下のフォルダを Category とする
-    $year = ''; $category = ''
+    # パスの中で最初に出てくる「NNNN年度」フォルダを年度とし、その直下を Category、さらにその下を Project とする
+    $year = ''; $category = ''; $project = ''
     for ($i = 0; $i -lt $parts.Length - 1; $i++) {
         if ($parts[$i] -match $yearPattern) {
             $year = $Matches[1]
             if ($i + 1 -lt $parts.Length - 1) { $category = $parts[$i + 1] }
+            if ($i + 2 -lt $parts.Length - 1) { $project = $parts[$i + 2] }
             break
         }
     }
@@ -53,6 +54,7 @@ function Add-File($f, $root) {
         FullPath     = $f.FullName
         Year         = $year
         Category     = $category
+        Project      = $project
         CollectedAt  = $collectedAt
     })
 }
@@ -97,12 +99,12 @@ if (-not (Test-Path -LiteralPath $outputDir)) {
 # 書き出し途中のファイルをビューアが読まないよう、一時ファイルに書いてから置き換える
 $outFile = Join-Path $outputDir "$pc.csv"
 $tmpFile = "$outFile.tmp"
-$header = 'PC,User,Root,RelativePath,Name,Extension,SizeKB,Modified,Created,FullPath,Year,Category,CollectedAt'
+$header = 'PC,User,Root,RelativePath,Name,Extension,SizeKB,Modified,Created,FullPath,Year,Category,Project,CollectedAt'
 if ($rows.Count -gt 0) {
     $rows | Export-Csv -Path $tmpFile -NoTypeInformation -Encoding UTF8
 } else {
     # 該当ファイル0件でも「収集は動いている」ことが分かるよう、ヘッダーと収集時刻だけの行を残す
-    $lines = @($header, "`"$pc`",`"$user`",,,,,,,,,,,`"$collectedAt`"")
+    $lines = @($header, "`"$pc`",`"$user`",,,,,,,,,,,,`"$collectedAt`"")
     Set-Content -Path $tmpFile -Value $lines -Encoding UTF8
 }
 Move-Item -LiteralPath $tmpFile -Destination $outFile -Force

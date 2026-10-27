@@ -1,12 +1,12 @@
 ﻿﻿# PC成果物チェックの初期設定（各PCで1回だけ実行する）。
 # 「setup.bat」をダブルクリックすると、このスクリプトが動く。
 #  1. 一式を C:\pc-check にコピー
-#  2. 成果物の場所（N:\社内共有\01_案件データ\2026年度\...）を確認
+#  2. 成果物の場所（N:\01_社内共有\01_案件データ\2026年度\...）を確認
 #  3. config.json を作成し、自動実行を登録し、1回目の収集を行う
 $ErrorActionPreference = 'Stop'
 
 $installDir = 'C:\pc-check'
-$defaultTarget = 'N:\社内共有\01_案件データ'
+$defaultTarget = 'N:\01_社内共有\01_案件データ'
 $defaultOutputDir = 'C:\pc-check-share'
 $fromYear = 2026
 $yearPattern = '^\s*(\d{4})\s*年度'
@@ -31,6 +31,19 @@ function ConvertTo-UncPath($path) {
 Write-Host '==============================================' -ForegroundColor Green
 Write-Host '  PC成果物チェック  セットアップ' -ForegroundColor Green
 Write-Host '==============================================' -ForegroundColor Green
+
+# 実行前に、作成・登録するものを示して承認を得る（共通行動規範 RULE 3）
+Write-Host ''
+Write-Host "  実行するPC          : $env:COMPUTERNAME"
+Write-Host "  作成するフォルダ    : $installDir （プログラム置き場）"
+Write-Host "                        $defaultOutputDir （一覧の出力先・変更可）"
+Write-Host '  登録するタスク      : PC-Check-Collect （30分ごとに一覧を更新）'
+Write-Host "  読むだけの場所      : $defaultTarget\${fromYear}年度 （変更・削除はしない）"
+Write-Host ''
+if ((Read-Host '  この内容で進めてよければ Enter、やめる場合は n を入力') -eq 'n') {
+    Write-Host '  中止しました。何も変更していません。'
+    return
+}
 
 # --- 1. コピー ---
 Write-Step 1 "プログラムを $installDir にコピーします"
