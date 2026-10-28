@@ -67,4 +67,4 @@ ALLION-01（30分ごとに自動）                 Notion（保管場所）    
 - **止めたいときは？**　PowerShell で `Unregister-ScheduledTask -TaskName PC-Check-Collect` を実行します。
 - **01 の電源が切れていたら？**　その間は更新されません。Claude は 📦 の「⏱ 最終チェック」の時刻を見て、いつ時点の情報かを答えます。
 - **自動実行のとき一瞬黒い画面が出る？**　30分に1回、一瞬だけ表示されることがあります。
-- **前の版で作った `C:\pc-check-share` は？**　もう使いません。削除するかはご判断ください（自動では消しません）。
+- **前の版で作ったものは？**　`C:\pc-check-share`（一覧CSV）と `C:\pc-check` の `collect.ps1`・`viewer.html` は、setup の最初の確認画面に「削除するもの」として表示し、Enter で承認すると削除します（2026/10/28 ユーザー指示）。

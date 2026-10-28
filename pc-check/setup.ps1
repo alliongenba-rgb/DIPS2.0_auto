@@ -13,6 +13,8 @@ $yearPattern = '^\s*(\d{4})\s*年度'
 $taskName = 'PC-Check-Collect'
 $logDataSourceId = 'a8600581-6f48-4b75-b1ec-9cafa9713dac'     # 📱 作業経過ログ（外出先確認用）
 $checkDataSourceId = '233e9b89-0f24-40f8-a494-6fb9739a63e3'   # 📦 成果物 格納チェック（自動更新）
+# 前の版（ファイル一覧方式）で作ったもの。ユーザー指示（2026/10/28）で削除する
+$oldItems = @('C:\pc-check-share', "$installDir\collect.ps1", "$installDir\viewer.html") | Where-Object { Test-Path -LiteralPath $_ }
 
 function Write-Step($n, $text) {
     Write-Host ''
@@ -57,6 +59,10 @@ Write-Host '==============================================' -ForegroundColor Gre
 Write-Host ''
 Write-Host "  実行するPC          : $env:COMPUTERNAME"
 Write-Host "  作成・上書きするもの: $installDir （プログラム置き場）"
+foreach ($old in $oldItems) {
+    $n = @(Get-ChildItem -LiteralPath $old -Recurse -File -Force -ErrorAction SilentlyContinue).Count
+    Write-Host "  削除するもの（前の版）: $old （ファイル $n 件）"
+}
 Write-Host "  登録するタスク      : $taskName （30分ごとに格納チェック。前回の同名タスクは置き換え）"
 Write-Host '  保存する鍵          : Notion の連携用の鍵（このPCのユーザー環境変数 ALLION_NOTION_TOKEN）'
 Write-Host "  読むだけの場所      : $defaultTarget\${fromYear}年度 （変更・削除はしない）"
@@ -69,6 +75,10 @@ if ((Read-Host '  この内容で進めてよければ Enter、やめる場合�
 
 # --- 1. コピー ---
 Write-Step 1 "プログラムを $installDir にコピーします"
+foreach ($old in $oldItems) {
+    Remove-Item -LiteralPath $old -Recurse -Force
+    Write-Host "  削除しました: $old"
+}
 New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 if ($PSScriptRoot.TrimEnd('\') -ne $installDir) {
     foreach ($name in @('check.ps1', 'install.ps1', 'setup.ps1', 'setup.bat', 'README.md')) {
