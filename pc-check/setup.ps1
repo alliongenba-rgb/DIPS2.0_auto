@@ -126,9 +126,18 @@ if ($token) {
     if ((Read-Host '  登録済みの鍵があります。そのまま使うなら Enter、入れ直すなら n を入力') -eq 'n') { $token = $null }
 }
 while ($true) {
-    if (-not $token) {
-        $secure = Read-Host '  Notion でコピーした鍵（ntn_ で始まる文字）を貼り付けて Enter（画面には表示されません）' -AsSecureString
-        $token = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)).Trim()
+    # 黒い画面への貼り付けは Ctrl+V が制御文字として入ってしまうことがあるため、
+    # Notion のコピーボタンでコピーした鍵をクリップボードから直接読む
+    while (-not $token) {
+        Read-Host '  Notion の「設定」→ APIトークン欄のコピーボタンを押してから、ここで Enter' | Out-Null
+        $clip = (Get-Clipboard -Raw) -replace '[\x00-\x20]', ''
+        if ($clip -match '^(ntn_|secret_)[A-Za-z0-9]+$') {
+            $token = $clip
+            Set-Clipboard -Value ' '   # 鍵をクリップボードに残さない
+            Write-Host "  鍵を読み取りました（$($token.Substring(0, 4))…・$($token.Length)文字）"
+        } else {
+            Write-Host '  コピーされた鍵が見つかりません。Notion のコピーボタンを押し直してください。' -ForegroundColor Yellow
+        }
     }
     $problem = Test-NotionAccess $token
     if (-not $problem) { break }
@@ -137,7 +146,8 @@ while ($true) {
         Write-Host '  中止しました。プログラムのコピーだけ済んでいます。'
         return
     }
-    if ($problem.StartsWith('鍵が正しく')) { $token = $null }
+    # 権限が足りないとき以外（鍵の誤り・読み取りの失敗）は、鍵を読み直す
+    if (-not $problem.Contains('権限')) { $token = $null }
 }
 [Environment]::SetEnvironmentVariable('ALLION_NOTION_TOKEN', $token, 'User')
 Write-Host '  鍵を確認し、このPCに保存しました（Notion の2つのデータベースを開けることを確認）' -ForegroundColor Green
